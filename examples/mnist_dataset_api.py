@@ -35,8 +35,7 @@ if K.backend() != 'tensorflow':
 
 
 def cnn_layers(inputs):
-    x = layers.Conv2D(32, (3, 3),
-                      activation='relu', padding='valid')(inputs)
+    x = layers.Conv2D(32, (3, 3),  activation='relu', padding='valid')(inputs)
     x = layers.MaxPooling2D(pool_size=(2, 2))(x)
     x = layers.Conv2D(64, (3, 3), activation='relu')(x)
     x = layers.MaxPooling2D(pool_size=(2, 2))(x)

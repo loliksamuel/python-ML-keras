@@ -51,7 +51,7 @@ def build_generator(latent_size):
     # label drawn from P_c, to image space (..., 28, 28, 1)
     cnn = Sequential()
 
-    cnn.add(Dense(3 * 3 * 384, input_dim=latent_size, activation='relu'))
+    cnn.add(Dense   (3 * 3 * 384, input_dim=latent_size, activation='relu'))
     cnn.add(Reshape((3, 3, 384)))
 
     # upsample to (7, 7, ...)
@@ -93,8 +93,7 @@ def build_discriminator():
     # the reference paper
     cnn = Sequential()
 
-    cnn.add(Conv2D(32, 3, padding='same', strides=2,
-                   input_shape=(28, 28, 1)))
+    cnn.add(Conv2D(32, 3, padding='same', strides=2,       input_shape=(28, 28, 1)))
     cnn.add(LeakyReLU(0.2))
     cnn.add(Dropout(0.3))
 
@@ -128,12 +127,12 @@ def build_discriminator():
 if __name__ == '__main__':
 
     # batch and latent size taken from the paper
-    epochs = 100
-    batch_size = 100
+    epochs      = 100
+    batch_size  = 100
     latent_size = 100
 
     # Adam parameters suggested in https://arxiv.org/abs/1511.06434
-    adam_lr = 0.0002
+    adam_lr     = 0.0002
     adam_beta_1 = 0.5
 
     # build the discriminator
@@ -148,7 +147,7 @@ if __name__ == '__main__':
     # build the generator
     generator = build_generator(latent_size)
 
-    latent = Input(shape=(latent_size, ))
+    latent      = Input(shape=(latent_size, ))
     image_class = Input(shape=(1,), dtype='int32')
 
     # get a fake image
@@ -178,7 +177,7 @@ if __name__ == '__main__':
     num_train, num_test = x_train.shape[0], x_test.shape[0]
 
     train_history = defaultdict(list)
-    test_history = defaultdict(list)
+    test_history  = defaultdict(list)
 
     for epoch in range(1, epochs + 1):
         print('Epoch {}/{}'.format(epoch, epochs))
