@@ -5,9 +5,11 @@ Gets to 98.40% test accuracy after 20 epochs
 2 seconds per epoch on a K520 GPU.
 '''
 
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function, unicode_literals
 
+import tensorflow as tf
 import numpy as np
+import pandas as pd
 import keras
 from keras.datasets import mnist
 from keras.models import Sequential
@@ -20,9 +22,73 @@ import matplotlib.pyplot as plt
 # print("creating deep learning to classify images to digit(0-9). MNIST images of 28×28 (=784 features) pixels are represented as an array of numbers  whose values range from [0, 255] (0=white,255=black) of type uint8")
 # These MNIST images of 28×28 (=784 features) pixels are represented as an array of numbers  whose values range from [0, 255] (0=white,255=black) of type uint8.
 
+
+
+
+
+
+def kpi_sharpeRatio():
+
+    risk_free_rate = 2.25 # 10 year US-treasury rate (annual) or 0
+    sharpe = 2
+    #  ((mean_daily_returns[stocks[0]] * 100 * 252) -  risk_free_rate ) / (std[stocks[0]] * 100 * np.sqrt(252))
+    return sharpe
+
+def kpi_commulativeReturn():
+    return 2
+
+
+def kpi_risk(df):
+    return df.std()
+
+
+def kpi_sharpeRatio():
+    return 2
+
+
+
+def softmax(z):
+    assert len(z.shape) == 2
+    s = np.max(z, axis=1)
+    s = s[:, np.newaxis]
+    e_x = np.exp(z - s)
+    div = np.sum(e_x, axis=1)
+    div = div[:, np.newaxis]
+    return e_x / div
+
+def loss_log():
+    return 2
+
+def loss_mse():
+    return 2
+
+
+def loss_gdc():
+    return 2
+
+def activation_sigmoid():
+    return 2
+
+
+def plot_selected(df, columns, start_index, end_index):
+    """Plot the desired columns over index values in the given range."""
+    # TODO: Your code here
+    # Note: DO NOT modify anything else!
+    #df = df[columns][start_index:end_index]
+    df.ix[start_index:end_index, columns]
+    df = normalize(df)
+    plot_data(df)
+
+def plot_data(df, title="normalized Stock prices"):
+    """Plot stock prices with a custom title and meaningful axis labels."""
+    ax = df.plot(title=title, fontsize=12)
+    ax.set_xlabel("Date")
+    ax.set_ylabel("Price")
+    plt.show()
+
 def plot_image(df, title):
     plt.figure()
-    plt.imshow(df[0])
+    plt.imshow(df[0])#, cmap=plt.cm.binary)
     plt.colorbar()
     plt.gca().grid(False)
     plt.title(title)
@@ -39,8 +105,113 @@ def plot_images(x,y, title):
         plt.xlabel(y[i])
     plt.show()
 
+def plot_stat_loss_vs_time(history_dict) :
+    acc      = history_dict['acc']
+    val_acc  = history_dict['val_acc']
+    loss     = history_dict['loss']
+    val_loss = history_dict['val_loss']
+
+    epochs = range(1, len(acc) + 1)
+
+    # "bo" is for "blue dot"
+    plt.plot(epochs, loss   , 'bo', label='Training loss')
+    # b is for "solid blue line"
+    plt.plot(epochs, val_loss, 'b', label='Validation loss')
+    plt.title('Training and validation loss over time')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.legend()
+    plt.show()
+
+def plot_stat_accuracy_vs_time(history_dict) :
+    acc      = history_dict['acc']
+    val_acc  = history_dict['val_acc']
+    loss     = history_dict['loss']
+    val_loss = history_dict['val_loss']
+    epochs = range(1, len(acc) + 1)
+
+    plt.plot(epochs, acc    , 'bo', label='Training acc')
+    plt.plot(epochs, val_acc, 'b' , label='Validation acc')
+    plt.title('Training and validation accuracy over time')
+    plt.xlabel('Epochs')
+    plt.ylabel('Accuracy')
+    plt.legend()
+
+    plt.show()
+
+def plot_stat_train_vs_test(history):
+    hist = pd.DataFrame(history.history)
+    hist['epoch'] = history.epoch
+
+    plt.figure()
+    plt.xlabel('Epoch')
+    plt.ylabel('Error [MPG]')
+    plt.plot(hist['epoch'], hist['loss'],
+             label='Train Error')
+    plt.plot(hist['epoch'], hist['val_loss'],
+             label = 'Test Error')
+    plt.ylim([0,5])
+    plt.legend()
+
+
+    plt.show()
+
+# normalize to first row
+def normalize(df):
+    return df/df.ix[0,:]
+
+
+def normalize(x):
+    train_stats = x_train.describe()
+    return (x - train_stats['mean']) / train_stats['std']
+
+
+def symbol_to_path(symbol, base_dir=""):
+    """Return CSV file path given ticker symbol."""
+    return os.path.join(base_dir, "{}.csv".format(str(symbol)))
+
+
+def get_data(symbols, dates):
+    """Read stock data (adjusted close) for given symbols from CSV files."""
+    df = pd.DataFrame(index=dates)
+    if 'GOOG' not in symbols:  # add GOOG for reference, if absent
+        symbols.insert(0, 'GOOG')
+
+    for symbol in symbols:
+        df_temp = pd.read_csv(symbol_to_path(symbol), index_col='Date',
+                              parse_dates=True, usecols=['Date', 'Adj Close'], na_values=['nan'])
+
+        df_temp = df_temp.rename(columns={'Adj Close': symbol})
+        print(df_temp.head())
+        df = df.join(df_temp)
+        if symbol == 'GOOG':  # drop dates GOOG did not trade
+            df = df.dropna(subset=["GOOG"])
+
+    return df
+
+
+
+def get_state(parameters, t, window_size = 20):
+    outside = []
+    d = t - window_size + 1
+    for parameter in parameters:
+        block = (
+            parameter[d : t + 1]
+            if d >= 0
+            else -d * [parameter[0]] + parameter[0 : t + 1]
+        )
+        res = []
+        for i in range(window_size - 1):
+            res.append(block[i + 1] - block[i])
+        for i in range(1, window_size, 1):
+            res.append(block[i] - block[0])
+        outside.append(res)
+    return np.array(outside).reshape((1, -1))
+
+
 print('Loading train & test data')
 (x_train, y_train), (x_test, y_test) = mnist.load_data()
+#dataset.sample(frac=0.8,random_state=0)
 print('\ntrain data')
 print(x_train[0])
 print(x_train[1])
@@ -62,26 +233,34 @@ batch_size  = 128# we cannot pass the entire data into network at once , so we d
 epochs      = 1 #  iterations. on each, train all data, then evaluate, then adjust parameters (weights and biases)
 #iterations  = 60000/128
 num_classes = 10 # there are 10 classes (10 digits from 0 to 9)
-num_hidden  = 512 # the bigger the number , the moe overfit, the lower the more underfit
+num_hidden  = 512 # If a model has more hidden units (a higher-dimensional representation space), and/or more layers, then the network can learn more complex representations. However, it makes the network more computationally expensive and may lead to overfit
 
 #iterations  = 60000/128
 print(x_train.shape[0], 'train samples')
 print( x_test.shape[0], 'test samples')
 
-print('\nNormalizing 0-255 (int)   to    0-1 (float)')
+print('\nClean data)')
+#dataset.isna().sum()
+#dataset = dataset.dropna()
+
+print('\nNormalize data 0-255 (int)   to    0-1 (float)')
 x_train = x_train.astype('float32')
 x_test  =  x_test.astype('float32')
 x_train /= 255
 x_test  /= 255
+# x_train = tf.keras.utils.normalize(x_train, axis=1)
+# x_test  = tf.keras.utils.normalize(x_test , axis=1)
+print(x_train[0])
+#print(x_train2[0])
 #plot_image(x_test,'picture example')
 
-print('\nConverting all 60000 images from matrix (28X28) to a vector (of size 784 features or neurons) cause only convolutional nn works with 2d images')
+print('\nTransform data. Converting all 60000 images from matrix (28X28) to a vector (of size 784 features or neurons) cause only convolutional nn works with 2d images')
 x_train = x_train.reshape(60000, 784)
 x_test  =  x_test.reshape(10000, 784)
 
 
 
-print('\nConvert class vectors to binary class matrices (for ex. convert digit 7 to bit array[0. 0. 0. 0. 0. 0. 0. 1. 0. 0.]')
+print('\nTransform data. Convert class vectors to binary class matrices (for ex. convert digit 7 to bit array[0. 0. 0. 0. 0. 0. 0. 1. 0. 0.]')
 y_train = keras.utils.to_categorical(y_train, num_classes)
 y_test  = keras.utils.to_categorical( y_test, num_classes)
 print('y_train[0]=', y_train[0])
@@ -89,7 +268,7 @@ print('y_test [0]=',  y_test[0])
 
 print('\ncreate model...')
 model = Sequential()# stack of layers
-#tf.keras.layers.Flatten()
+#model.add(tf.keras.layers.Flatten())
 model.add(Dense  (num_hidden, activation='relu', input_shape=(784,)))
 model.add(Dropout(0.2))
 model.add(Dense  (num_hidden, activation='relu'))
@@ -101,13 +280,27 @@ model.compile(loss      = 'categorical_crossentropy',# measure how accurate the 
               optimizer = RMSprop(),#this is how model is updated based on data and loss function
               metrics   = ['accuracy'])
 
+
+
 print('\ntrain model...')
 history = model.fit(  x_train
                     , y_train
                     , batch_size     = batch_size
                     , epochs         = epochs
+                    , validation_data= (x_test, y_test)
                     , verbose        = 1
-                    , validation_data= (x_test, y_test))
+                  # , callbacks=[early_stop, PrintDot()]#Early stopping is a useful technique to prevent overfitting.
+                      )
+
+print('\nplot_accuracy_loss_vs_time...')
+history_dict = history.history
+print(history_dict.keys())
+plot_stat_loss_vs_time     (history_dict)
+plot_stat_accuracy_vs_time (history_dict)
+hist = pd.DataFrame(history.history)
+hist['epoch'] = history.epoch
+print(hist.tail())
+plot_stat_train_vs_test(history)
 
 print('\nEvaluate the model with unseen data. pls validate that test accuracy =~ train accuracy and close to 1.0')
 score = model.evaluate(x_test, y_test, verbose=0)
@@ -119,6 +312,8 @@ predictions = model.predict(x_test)
 print('labeled   as ', y_test[0]     , ' highest confidence for ' , np.argmax(y_test[0]))
 print('predicted as ' ,predictions[0], ' highest confidence for ' , np.argmax(predictions[0]))
 
-
-# plot
+filename='mnist_mlp.model'
+print('\nSave model as ',filename)
+model.save(filename)# 5.4 mb
+newModel = tf.keras.models.load_model(filename)
 

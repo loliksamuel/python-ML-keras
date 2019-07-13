@@ -41,18 +41,16 @@ model = Sequential()
 
 # we start off with an efficient embedding layer which maps
 # our vocab indices into embedding_dims dimensions
-model.add(Embedding(max_features,
-                    embedding_dims,
-                    input_length=maxlen))
+model.add(Embedding(max_features,  embedding_dims,  input_length=maxlen))
 model.add(Dropout(0.2))
 
 # we add a Convolution1D, which will learn filters
 # word group filters of size filter_length:
 model.add(Conv1D(filters,
                  kernel_size,
-                 padding='valid',
-                 activation='relu',
-                 strides=1))
+                 padding    = 'valid',
+                 activation = 'relu',
+                 strides    = 1))
 # we use max pooling:
 model.add(GlobalMaxPooling1D())
 
