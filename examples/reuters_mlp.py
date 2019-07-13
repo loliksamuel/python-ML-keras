@@ -10,23 +10,42 @@ from keras.models import Sequential
 from keras.layers import Dense, Dropout, Activation
 from keras.preprocessing.text import Tokenizer
 
+# convert numbers to words 1=<start> first word in any sentence
+def decode(text):
+    word_map()
+    return ' '.join([reverse_word_index.get(i, '?') for i in text])
+
+def word_map():
+    global reverse_word_index
+    # A dictionary mapping words to an integer index
+    word_index = reuters.get_word_index()
+    # The first indices are reserved
+    word_index = {k: (v + 3) for k, v in word_index.items()}
+    word_index["<PAD>"   ] = 0
+    word_index["<START>" ] = 1
+    word_index["<UNK>"   ] = 2  # unknown
+    word_index["<UNUSED>"] = 3
+    reverse_word_index = dict([(value, key) for (key, value) in word_index.items()])
+
+
 max_words   = 1000
 
 print('Loading data...split between train and test sets')
 (x_train, y_train), (x_test, y_test) = reuters.load_data(num_words=max_words,
                                                     test_split=0.2)
-print('train data')
-print(x_train[0])
-print(x_train[1])
+print('\ntrain data')
+print('train[0] as numbers=',x_train[0])
+print('train[0] as words=', decode(x_train[0]))
+print('shape', x_train.shape)
 
-print('test data')
+print('\ntest data')
 print(x_test[0])
 print(x_test[1])
 
-print('y data')
+print('\nlabeled data')
 print(y_test[0])
 print(y_test[1])
-
+print('shape', y_test.shape)
 
 batch_size  = 32
 num_classes = np.max(y_train) + 1

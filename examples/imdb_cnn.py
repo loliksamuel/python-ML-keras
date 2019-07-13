@@ -29,9 +29,10 @@ print('Loading data...')
 print(len(x_train), 'train sequences')
 print(len(x_test), 'test sequences')
 
+#Since the movie reviews must be the same length, we will use the pad_sequences function to standardize the lengths:
 print('Pad sequences (samples x time)')
 x_train = sequence.pad_sequences(x_train, maxlen=maxlen)
-x_test = sequence.pad_sequences(x_test, maxlen=maxlen)
+x_test  = sequence.pad_sequences(x_test, maxlen=maxlen)
 print('x_train shape:', x_train.shape)
 print('x_test shape:', x_test.shape)
 
