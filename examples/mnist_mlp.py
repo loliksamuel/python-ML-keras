@@ -233,7 +233,7 @@ print(y_train[3])
 print('shape', y_test.shape)
 
 batch_size  = 128# we cannot pass the entire data into network at once , so we divide it to batches . number of samples that we will pass through the network at 1 time and use for each epoch. default is 32
-epochs      = 3 #  iterations. on each, train all data, then evaluate, then adjust parameters (weights and biases)
+epochs      = 12 #  iterations. on each, train all data, then evaluate, then adjust parameters (weights and biases)
 #iterations  = 60000/128
 num_classes = 10 # there are 10 classes (10 digits from 0 to 9)
 num_hidden  = 512 # If a model has more hidden units (a higher-dimensional representation space), and/or more layers, then the network can learn more complex representations. However, it makes the network more computationally expensive and may lead to overfit
@@ -307,8 +307,8 @@ plot_stat_train_vs_test(history)
 
 print('\nEvaluate the model with unseen data. pls validate that test accuracy =~ train accuracy and close to 1.0')
 score = model.evaluate(x_test, y_test, verbose=0)
-print('Test loss:'    , score[0], ' (is it close to 0?)')
-print('Test accuracy:', score[1], ' (is it close to 1 and close to train accuracy?)')
+print('Test loss:'    , score[0], ' (is it close to 0?)')#Test loss: 0.089
+print('Test accuracy:', score[1], ' (is it close to 1 and close to train accuracy?)')#Test accuracy here: 0.9825, Test accuracy in mnist_cnn: 0.9903
 
 print('\nPredict unseen data with 10 probabilities for 10 classes(choose the highest)')
 predictions = model.predict(x_test)

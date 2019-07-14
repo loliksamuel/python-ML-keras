@@ -4,9 +4,8 @@
 2 - Freeze convolutional layers and fine-tune dense layers
    for the classification of digits [5..9].
 
-Get to 99.8% test accuracy after 5 epochs
-for the first five digits classifier
-and 99.2% for the last five digits after transfer + fine-tuning.
+Get 99.8% test accuracy after 5 epochs for the first 5 digits classifier
+Get 99.2% test accuracy after 5 epochs for the last  5 digits after transfer + fine-tuning.
 '''
 
 from __future__ import print_function

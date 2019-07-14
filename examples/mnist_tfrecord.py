@@ -116,9 +116,9 @@ def cnn_layers(x_train_input):
 
 sess = K.get_session()
 
-batch_size = 100
+batch_size  = 100
 batch_shape = (batch_size, 28, 28, 1)
-epochs = 5
+epochs      = 5
 num_classes = 10
 
 # The capacity variable controls the maximum queue size
