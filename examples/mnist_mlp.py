@@ -16,7 +16,7 @@ from keras.models import Sequential
 from keras.layers import Dense, Dropout
 from keras.optimizers import RMSprop
 import matplotlib.pyplot as plt
-
+#import pandas.io.data as web
 # https://towardsdatascience.com/deep-learning-for-beginners-practical-guide-with-python-and-keras-d295bfca4487
 # https://www.youtube.com/watch?v=aircAruvnKk
 # print("creating deep learning to classify images to digit(0-9). MNIST images of 28×28 (=784 features) pixels are represented as an array of numbers  whose values range from [0, 255] (0=white,255=black) of type uint8")
@@ -24,6 +24,8 @@ import matplotlib.pyplot as plt
 
 
 
+def kpi_returns(prices):
+    return ((prices-prices.shift(-1))/prices)[:-1]
 
 
 
@@ -139,21 +141,15 @@ def plot_stat_accuracy_vs_time(history_dict) :
 
     plt.show()
 
+
 def plot_stat_train_vs_test(history):
-    hist = pd.DataFrame(history.history)
-    hist['epoch'] = history.epoch
-
-    plt.figure()
+    hist = history.history
     plt.xlabel('Epoch')
-    plt.ylabel('Error [MPG]')
-    plt.plot(hist['epoch'], hist['loss'],
-             label='Train Error')
-    plt.plot(hist['epoch'], hist['val_loss'],
-             label = 'Test Error')
-    plt.ylim([0,5])
-    plt.legend()
-
-
+    plt.ylabel('Error')
+    plt.plot(hist['loss'])
+    plt.plot(hist['val_loss'])
+    plt.title    ('model loss')
+    plt.legend   (['train Error', 'test Error'], loc='upper right')
     plt.show()
 
 # normalize to first row
@@ -171,7 +167,7 @@ def symbol_to_path(symbol, base_dir=""):
     return os.path.join(base_dir, "{}.csv".format(str(symbol)))
 
 
-def get_data(symbols, dates):
+def get_data_from_disc(symbols, dates):
     """Read stock data (adjusted close) for given symbols from CSV files."""
     df = pd.DataFrame(index=dates)
     if 'GOOG' not in symbols:  # add GOOG for reference, if absent
@@ -189,6 +185,13 @@ def get_data(symbols, dates):
 
     return df
 
+def get_data_from_web(symbol):
+    start, end = '2007-05-02', '2016-04-11'
+    data = web.DataReader(symbol, 'yahoo', start, end)
+    data=pd.DataFrame(data)
+    prices=data['Adj Close']
+    prices=prices.astype(float)
+    return prices
 
 
 def get_state(parameters, t, window_size = 20):
@@ -230,7 +233,7 @@ print(y_train[3])
 print('shape', y_test.shape)
 
 batch_size  = 128# we cannot pass the entire data into network at once , so we divide it to batches . number of samples that we will pass through the network at 1 time and use for each epoch. default is 32
-epochs      = 1 #  iterations. on each, train all data, then evaluate, then adjust parameters (weights and biases)
+epochs      = 3 #  iterations. on each, train all data, then evaluate, then adjust parameters (weights and biases)
 #iterations  = 60000/128
 num_classes = 10 # there are 10 classes (10 digits from 0 to 9)
 num_hidden  = 512 # If a model has more hidden units (a higher-dimensional representation space), and/or more layers, then the network can learn more complex representations. However, it makes the network more computationally expensive and may lead to overfit
@@ -273,7 +276,7 @@ model.add(Dense  (num_hidden, activation='relu', input_shape=(784,)))
 model.add(Dropout(0.2))
 model.add(Dense  (num_hidden, activation='relu'))
 model.add(Dropout(0.2))#regularization technic by removing some nodes
-model.add(Dense  (num_classes, activation='softmax'))
+model.add(Dense  (num_classes, activation='softmax'))# last layer always has softmax(except for regession problems and  binary- 2 classes where sigmoid is enough)
 # Prints a string summary of the  neural network.')
 model.summary()
 model.compile(loss      = 'categorical_crossentropy',# measure how accurate the model during training
