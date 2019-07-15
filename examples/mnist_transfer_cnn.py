@@ -6,6 +6,7 @@
 
 Get 99.8% test accuracy after 5 epochs for the first 5 digits classifier
 Get 99.2% test accuracy after 5 epochs for the last  5 digits after transfer + fine-tuning.
+https://classroom.udacity.com/courses/ud187/lessons/a915f824-ce4a-4f5e-9897-a78ccbff313d/concepts/b9fb7671-ad44-472b-8725-5182b81b415b
 '''
 
 from __future__ import print_function
@@ -76,13 +77,13 @@ def train_model(model, train, test, num_classes):
 # create two datasets one with digits below 5 and one with 5 and above
 x_train_lt5 = x_train[y_train < 5]
 y_train_lt5 = y_train[y_train < 5]
-x_test_lt5 = x_test[y_test < 5]
-y_test_lt5 = y_test[y_test < 5]
+x_test_lt5  =  x_test[ y_test < 5]
+y_test_lt5  =  y_test[ y_test < 5]
 
 x_train_gte5 = x_train[y_train >= 5]
 y_train_gte5 = y_train[y_train >= 5] - 5
-x_test_gte5 = x_test[y_test >= 5]
-y_test_gte5 = y_test[y_test >= 5] - 5
+x_test_gte5  =  x_test[ y_test >= 5]
+y_test_gte5  =  y_test[ y_test >= 5] - 5
 
 # define two groups of layers: feature (convolutions) and classification (dense)
 feature_layers = [
@@ -109,15 +110,17 @@ classification_layers = [
 model = Sequential(feature_layers + classification_layers)
 
 # train model for 5-digit classification [0..4]
-train_model(model,
-            (x_train_lt5, y_train_lt5),
-            (x_test_lt5, y_test_lt5), num_classes)
+train_model(  model
+            , (x_train_lt5, y_train_lt5)
+            , ( x_test_lt5,  y_test_lt5)
+            , num_classes)
 
 # freeze feature layers and rebuild model
 for l in feature_layers:
     l.trainable = False
 
 # transfer: train dense layers for new classification task [5..9]
-train_model(model,
-            (x_train_gte5, y_train_gte5),
-            (x_test_gte5, y_test_gte5), num_classes)
+train_model(  model
+            , (x_train_gte5, y_train_gte5)
+            , ( x_test_gte5 , y_test_gte5)
+            , num_classes)

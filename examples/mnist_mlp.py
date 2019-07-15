@@ -3,6 +3,13 @@
 Gets to 98.40% test accuracy after 20 epochs
 (there is *a lot* of margin for parameter tuning).
 2 seconds per epoch on a K520 GPU.
+
+
+3 Techniques to Prevent Overfitting
+1. Early Stopping: In this method, we track the loss on the validation set during the training phase and use it to determine when to stop training such that the model is accurate but not overfitting.
+2. Image Augmentation: Artificially boosting the number of images in our training set by applying random image transformations to the existing images in the training set.
+3. neoron Dropout: Removing a random selection of a fixed number of neurons in a neural network during training.
+
 '''
 
 from __future__ import absolute_import, division, print_function, unicode_literals
@@ -16,6 +23,7 @@ from keras.models import Sequential
 from keras.layers import Dense, Dropout
 from keras.optimizers import RMSprop
 import matplotlib.pyplot as plt
+from sklearn.preprocessing import StandardScaler
 #import pandas.io.data as web
 # https://towardsdatascience.com/deep-learning-for-beginners-practical-guide-with-python-and-keras-d295bfca4487
 # https://www.youtube.com/watch?v=aircAruvnKk
@@ -146,8 +154,8 @@ def plot_stat_train_vs_test(history):
     hist = history.history
     plt.xlabel('Epoch')
     plt.ylabel('Error')
-    plt.plot(hist['loss'])
-    plt.plot(hist['val_loss'])
+    plt.plot(hist['loss'])#train loss
+    plt.plot(hist['val_loss'])#validation loss
     plt.title    ('model loss')
     plt.legend   (['train Error', 'test Error'], loc='upper right')
     plt.show()
@@ -161,13 +169,20 @@ def normalize(x):
     train_stats = x_train.describe()
     return (x - train_stats['mean']) / train_stats['std']
 
+def normalize(x):
+
+    scaler = StandardScaler()
+    x_norm = scaler.fit_transform(x.values)
+    x_norm = pd.DataFrame(x_norm, index=x.index, columns=x.columns)
+
+    return x_norm
 
 def symbol_to_path(symbol, base_dir=""):
     """Return CSV file path given ticker symbol."""
     return os.path.join(base_dir, "{}.csv".format(str(symbol)))
 
 
-def get_data_from_disc(symbols, dates):
+def get_data_from_disc_join(symbols, dates):
     """Read stock data (adjusted close) for given symbols from CSV files."""
     df = pd.DataFrame(index=dates)
     if 'GOOG' not in symbols:  # add GOOG for reference, if absent
@@ -235,8 +250,9 @@ print('shape', y_test.shape)
 batch_size  = 128# we cannot pass the entire data into network at once , so we divide it to batches . number of samples that we will pass through the network at 1 time and use for each epoch. default is 32
 epochs      = 12 #  iterations. on each, train all data, then evaluate, then adjust parameters (weights and biases)
 #iterations  = 60000/128
-num_classes = 10 # there are 10 classes (10 digits from 0 to 9)
+num_input   = 784 # features
 num_hidden  = 512 # If a model has more hidden units (a higher-dimensional representation space), and/or more layers, then the network can learn more complex representations. However, it makes the network more computationally expensive and may lead to overfit
+num_classes = 10 # there are 10 classes (10 digits from 0 to 9)
 
 #iterations  = 60000/128
 print(x_train.shape[0], 'train samples')
@@ -272,7 +288,7 @@ print('y_test [0]=',  y_test[0])
 print('\ncreate model...')
 model = Sequential()# stack of layers
 #model.add(tf.keras.layers.Flatten())
-model.add(Dense  (num_hidden, activation='relu', input_shape=(784,)))
+model.add(Dense  (num_hidden, activation='relu', input_shape=(num_input,)))
 model.add(Dropout(0.2))
 model.add(Dense  (num_hidden, activation='relu'))
 model.add(Dropout(0.2))#regularization technic by removing some nodes
