@@ -224,11 +224,12 @@ print('Test accuracy:', score[1], ' (is it close to 1 and close to train accurac
 
 print('\nPredict unseen data with 10 probabilities for 10 classes(choose the highest)')
 Y_pred = model.predict(x_test)
-print('labeled   as ', y_test[0]     , ' highest confidence for ' , np.argmax(y_test[0]))
+print('labeled   as ', y_test[0], ' highest confidence for ' , np.argmax(y_test[0]))
 print('predicted as ' ,Y_pred[0], ' highest confidence for ' , np.argmax(Y_pred[0]))
 y_pred = np.argmax(Y_pred, axis=1)
-print('prediction list= ' , y_pred.tolist())
-#print('true label list= ' , y_test.tolist())
+Y_test = np.argmax(y_test, axis=1)
+#print('prediction list= ' , y_pred.tolist())
+#print('labelized  list= ' , Y_test.tolist())
 
 
 

@@ -85,18 +85,15 @@ def plot_stat_loss_vs_accuracy(history_dict) :
     acc_test   = history_dict['val_acc']
     loss_train = history_dict['loss']
     loss_test  = history_dict['val_loss']
-
     epochs = range(1, len(acc_train) + 1)
 
-    # "bo" is for "blue dot"
-    plt.plot(epochs, loss_train   , 'b', color='blue',label='train loss')
-    plt.plot(epochs, loss_test    , 'b', color='green',label='test_loss')
-    # b is for "solid blue line"
-    plt.plot(epochs, acc_train, 'b', color='red'   , label='train accuracy')
-    plt.plot(epochs, acc_test , 'b', color='orange', label='test  accuracy')
-    plt.title('train & test loss & accuracy over time')
+    plt.plot(epochs, loss_train , 'b', color='red'     ,label='train loss')
+    plt.plot(epochs, loss_test  , 'b', color='orange'  ,label='test_loss')
+    plt.plot(epochs, acc_train  , 'b', color='green'   , label='train accuracy')
+    plt.plot(epochs, acc_test   , 'b', color='blue'    , label='test  accuracy')
+    plt.title('Loss & accuracy over time')
     plt.xlabel('Epochs')
-    plt.ylabel('Loss& accuracy')
+    plt.ylabel('Loss & accuracy')
     plt.legend()
     plt.show()
 
