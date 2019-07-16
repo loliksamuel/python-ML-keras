@@ -25,6 +25,7 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 import utils as ut
+import backtest as bt
 from sklearn.model_selection import train_test_split
 
 import keras
@@ -58,6 +59,12 @@ print('\n======================================')
 #
 # # Define stock symbols
 # symbols = []#'TSLA', 'GOOG', 'FB']  # SPY will be added in get_data()
+# import get_prices as hist
+# hist.get_stock_data(symbol, start_date=start_date, end_date=end_date)
+# process = DataProcessing("stock_prices.csv", 0.9)
+# process.gen_test(10)
+# process.gen_train(10)
+#
 
 # Get stock data
 df_all = ut.get_data_from_disc(symbol, 3600)
@@ -270,6 +277,11 @@ np.set_printoptions(precision=2)
 # # Plot normalized confusion matrix
 # ut.plot_confusion_matrix(y_test, y_pred, classes=class_names, normalize=True,
 #                       title='Normalized confusion matrix')
+
+print('\nBacktesting')
+print('\n======================================')
+
+bt.back_test(model,10,symbol, start_date='1970-01-03', end_date='2019-01-03', dim=2)
 
 
 
