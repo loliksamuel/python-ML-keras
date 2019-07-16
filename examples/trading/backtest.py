@@ -18,14 +18,19 @@ def back_test(strategy, seq_len, ticker, start_date, end_date, dim):
     :type dim: tuple
     :return: Percentage errors array that gives the errors for every test in the given date range
     """
+    print('backtesting ticker ',ticker)
+    print('===========================')
     data = pdr.get_data_yahoo(ticker, start_date, end_date)
-    stock_data = data["Adj Close"]
+    stock_data = data["Close"]
     print(stock_data)
     errors = []
+    print('errors=',errors)
     for i in range((len(stock_data)//10)*10 - seq_len - 1):
         x = np.array(stock_data.iloc[i: i + seq_len, 1]).reshape(dim) / 200
         y = np.array(stock_data.iloc[i + seq_len + 1, 1]) / 200
+        print('i=',i,'x=',x,'y=',y)
         predict = strategy.predict(x)
+        print('predict=',predict)
         while predict == 0:
             predict = strategy.predict(x)
         error = (predict - y) / 100

@@ -416,7 +416,7 @@ print('Test accuracy:', score[1], ' (is it close to 1 and close to train accurac
 
 print('\nPredict unseen data with 10 probabilities for 10 classes(choose the highest)')
 predictions = model.predict(x_test)
-print('labeled   as ', y_test[0]     , ' highest confidence for ' , np.argmax(y_test[0]))
+print('labeled   as ' , y_test[0]    , ' highest confidence for ' , np.argmax(y_test[0]))
 print('predicted as ' ,predictions[0], ' highest confidence for ' , np.argmax(predictions[0]))
 
 filename='mnist_mlp.model'

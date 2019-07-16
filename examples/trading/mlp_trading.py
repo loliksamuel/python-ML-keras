@@ -281,7 +281,7 @@ np.set_printoptions(precision=2)
 print('\nBacktesting')
 print('\n======================================')
 
-bt.back_test(model,10,symbol, start_date='1970-01-03', end_date='2019-01-03', dim=2)
+#bt.back_test(model,10,symbol, start_date='1970-01-03', end_date='2019-01-03', dim=2)
 
 
 
