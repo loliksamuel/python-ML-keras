@@ -228,6 +228,25 @@ print('\nSave model as ',filename)
 model.save(filename)# 5.4 mb
 newModel = tf.keras.models.load_model(filename)
 
+data = df_all['range'] #np.random.normal(0, 20, 1000)
+bins = np.linspace(np.math.ceil(min(data)),    np.math.floor(max(data)),    100) # fixed number of bins
+
+ut.plot_histogram(  x = data
+                  , bins=100
+                  , title = 'range of a bar - Gaussian data (fixed number of bins)'
+                  , xlabel ='range of a bar from open to close'
+                  , ylabel ='count')
+
+
+ut.plot_histogram(    x = df_all['range_sma']
+                    , bins=100
+                    , title = 'diff bw 2 sma - Gaussian data (fixed number of bins)'
+                    , xlabel ='diff bw 2 sma 10,20  '
+                    , ylabel ='count')
+
+
+
+
 
 
 np.set_printoptions(precision=2)
