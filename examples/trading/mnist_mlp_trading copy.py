@@ -224,8 +224,8 @@ def get_data_from_disc(symbol):
     df1['sma50'] = df1['Close'].rolling(window=50).mean()
     df1['sma200'] = df1['Close'].rolling(window=200).mean()
 
-    df1 = df1[-(df1.shape[0]-200):]  # skip 1st 200 rows due to NAN in sma, range
-    print ('\ndf1=\n',df1)
+    df1 = df1[-(df1.shape[0]-3600):]  # skip 1st 200 rows due to NAN in sma, range
+    print ('\ndf1=\n',df1.tail())
     print ('\nsma_10=\n',df1['sma10'] )
     print ('\nsma_20=\n',df1['sma20'] )
 
@@ -251,12 +251,13 @@ def get_data_from_disc(symbol):
 
 
     print('columns=', df1.columns)
-    print ('\ndf1=\n',df1)
+    print ('\ndf1=\n',df1.loc[:, ['Open','High', 'Low', 'Close', 'range', 'isUp']])
+    print ('\ndf1=\n',df1.loc[:, ['sma10','sma20','sma50','sma200','range_sma']])
     return df1
 
 
 def get_data_from_web(symbol):
-    start, end = '1950-01-03','2019-07-12'#'2007-05-02', '2016-04-11'
+    start, end = '1970-01-03','2019-07-12'#'2007-05-02', '2016-04-11'
     data = web.DataReader(symbol, 'yahoo', start, end)
     data=pd.DataFrame(data)
     prices=data['Adj Close']
@@ -296,7 +297,7 @@ def kpi_sharpeRatio():
 print('\nLoading  data')
 print('\n======================================')
 # Define date range
-start_date, end_date='1950-01-03','2019-07-12'
+start_date, end_date='1970-01-03','2019-07-12'
 dates=pd.date_range(start_date,end_date)
 print("dates="  ,dates)
 print("date[0]=",dates[0])
@@ -394,7 +395,11 @@ print('\n======================================')
 print('\nNormalize   to    0-1 (float)')
 x_train = tf.keras.utils.normalize(x_train, axis=1)
 x_test  = tf.keras.utils.normalize(x_test , axis=1)
+#print('columns=', x_train.columns)
+#print ('\ndf1=\n',x_train.loc[:, ['Open','High', 'Low', 'Close', 'range']])
+#print ('\ndf1=\n',x_train.loc[:, ['sma10','sma20','sma50','sma200','range_sma']])
 print(x_train[0])
+print(x_train)
 #print(x_train2[0])
 #plot_image(x_test,'picture example')
 
