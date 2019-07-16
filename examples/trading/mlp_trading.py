@@ -122,14 +122,6 @@ print( x_test.shape[0], 'test samples')
 
 
 
-batch_size  = 128# we cannot pass the entire data into network at once , so we divide it to batches . number of samples that we will pass through the network at 1 time and use for each epoch. default is 32
-epochs      = 25 #  iterations. on each, train all data, then evaluate, then adjust parameters (weights and biases)
-#iterations  = 60000/128
-num_input   = x_train.shape[1] # features
-num_hidden  = 512 # If a model has more hidden units (a higher-dimensional representation space), and/or more layers, then the network can learn more complex representations. However, it makes the network more computationally expensive and may lead to overfit
-num_classes = 2 # there are 3 classes (buy.sell. hold) or (green,red,hold)
-class_names = ['Green bar', 'Red Bar']# 'no direction Bar'
-#iterations  = 60000/128
 
 
 print('\nClean data)')
@@ -151,6 +143,15 @@ print(x_train)
 print('\nRebalancing')
 
 
+batch_size  = 128# we cannot pass the entire data into network at once , so we divide it to batches . number of samples that we will pass through the network at 1 time and use for each epoch. default is 32
+epochs      = 35 #  iterations. on each, train all data, then evaluate, then adjust parameters (weights and biases)
+#iterations  = 60000/128
+num_input   = x_train.shape[1] # features
+num_hidden  = 512 # If a model has more hidden units (a higher-dimensional representation space), and/or more layers, then the network can learn more complex representations. However, it makes the network more computationally expensive and may lead to overfit
+num_classes = 2 # there are 3 classes (buy.sell. hold) or (green,red,hold)
+class_names = ['Green bar', 'Red Bar']# 'no direction Bar'
+#iterations  = 60000/128
+
 print('\nTransform data. Convert class vectors to binary class matrices (for ex. convert digit 7 to bit array[0. 0. 0. 0. 0. 0. 0. 1. 0. 0.]')
 y_train = keras.utils.to_categorical(y_train, num_classes)
 y_test  = keras.utils.to_categorical( y_test, num_classes)
@@ -159,6 +160,7 @@ print('y_test [0]=',  y_test[0])
 
 print('\ncreate model...')
 print('\n======================================')
+
 model = Sequential()# stack of layers
 #model.add(tf.keras.layers.Flatten())
 model.add(Dense  (num_hidden, activation='relu', input_shape=(num_input,)))
@@ -166,10 +168,11 @@ model.add(Dropout(0.2))
 model.add(Dense  (num_hidden, activation='relu'))
 model.add(Dropout(0.2))#regularization technic by removing some nodes
 model.add(Dense  (num_classes, activation='softmax'))# last layer always has softmax(except for regession problems and  binary- 2 classes where sigmoid is enough)
-# Prints a string summary of the  neural network.')
+# For binary classification, softmax & sigmoid should give the same results, because softmax is a generalization of sigmoid for a larger number of classes.
 # softmax:  loss: 0.3099 - acc: 0.8489 - val_loss: 0.2929 - val_acc: 0.8249
 # sigmoid:  loss: 0.2999 - acc: 0.8482 - val_loss: 0.1671 - val_acc: 0.9863
 
+# Prints a string summary of the  neural network.')
 model.summary()
 model.compile(loss      = 'categorical_crossentropy',# measure how accurate the model during training
               optimizer = RMSprop(),#this is how model is updated based on data and loss function
@@ -179,10 +182,12 @@ model.compile(loss      = 'categorical_crossentropy',# measure how accurate the 
 
 layers = model.layers
 #B_Output_Hidden = model.layers[0].get_weights()[1]
-print ('model.weights=\n', model.get_weights())
+#print ('model.layers=\n', layers)
+#print ('model.weights=\n', model.get_weights())
 
 print('\ntrain model for ',epochs,' epochs...')
 print('\n======================================')
+
 history = model.fit(  x_train
                     , y_train
                     , batch_size     = batch_size
@@ -197,7 +202,9 @@ print('\nEvaluate the model with unseen data. pls validate that test accuracy =~
 print('\n======================================')
 layers = model.layers
 #B_Output_Hidden = model.layers[0].get_weights()[1]
-print ('model.weights=\n', model.get_weights())
+#print ('model.layers=\n', layers)
+print ('model.inputs=\n', num_input)
+print ('model.output=\n', num_classes)
 
 print('\nplot_accuracy_loss_vs_time...')
 history_dict = history.history
