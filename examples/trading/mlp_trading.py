@@ -7,7 +7,8 @@ Gets to 90.40% test accuracy after 20 epochs
 3 Techniques to Prevent Overfitting
 1. Early Stopping: In this method, we track the loss on the validation set during the training phase and use it to determine when to stop training such that the model is accurate but not overfitting.
 2. Image Augmentation: Artificially boosting the number of images in our training set by applying random image transformations to the existing images in the training set.
-3. neoron Dropout: Removing a random selection of a fixed number of neurons in a neural network during training.
+3. neoron Dropout: Removing a random selection of a fixed number of neurons in a neural network during training. model.add(Dropout(0.2, input_shape=(60,)))
+4. L1, L2 Regularization:https://classroom.udacity.com/courses/ud188/lessons/b4ca7aaa-b346-43b1-ae7d-20d27b2eab65/concepts/75935645-a408-4685-bd9c-5f234e1b0761
 
 
 bug tracker
@@ -129,7 +130,7 @@ print('\n======================================')
 #dataset.isna().sum()
 #dataset = dataset.dropna()
 
-print('\nNormalize   to    0-1 (float)')
+print('\nNormalize   to    0-1 (float)')# very strange results if we dont
 x_train = tf.keras.utils.normalize(x_train, axis=1)
 x_test  = tf.keras.utils.normalize(x_test , axis=1)
 #print('columns=', x_train.columns)
@@ -144,17 +145,17 @@ print('\nRebalancing')
 
 
 batch_size  = 128# we cannot pass the entire data into network at once , so we divide it to batches . number of samples that we will pass through the network at 1 time and use for each epoch. default is 32
-epochs      = 35 #  iterations. on each, train all data, then evaluate, then adjust parameters (weights and biases)
+epochs      = 50 #  iterations. on each, train all data, then evaluate, then adjust parameters (weights and biases)
 #iterations  = 60000/128
-num_input   = x_train.shape[1] # features
-num_hidden  = 512 # If a model has more hidden units (a higher-dimensional representation space), and/or more layers, then the network can learn more complex representations. However, it makes the network more computationally expensive and may lead to overfit
-num_classes = 2 # there are 3 classes (buy.sell. hold) or (green,red,hold)
-class_names = ['Green bar', 'Red Bar']# 'no direction Bar'
+size_input   = x_train.shape[1] # no of features
+size_hidden  = 512 # If a model has more hidden units (a higher-dimensional representation space), and/or more layers, then the network can learn more complex representations. However, it makes the network more computationally expensive and may lead to overfit
+size_output  = 2 # there are 3 classes (buy.sell. hold) or (green,red,hold)
+name_output  = ['Green bar', 'Red Bar']# 'no direction Bar'
 #iterations  = 60000/128
 
 print('\nTransform data. Convert class vectors to binary class matrices (for ex. convert digit 7 to bit array[0. 0. 0. 0. 0. 0. 0. 1. 0. 0.]')
-y_train = keras.utils.to_categorical(y_train, num_classes)
-y_test  = keras.utils.to_categorical( y_test, num_classes)
+y_train = keras.utils.to_categorical(y_train, size_output)
+y_test  = keras.utils.to_categorical(y_test, size_output)
 print('y_train[0]=', y_train[0])
 print('y_test [0]=',  y_test[0])
 
@@ -163,11 +164,11 @@ print('\n======================================')
 
 model = Sequential()# stack of layers
 #model.add(tf.keras.layers.Flatten())
-model.add(Dense  (num_hidden, activation='relu', input_shape=(num_input,)))
-model.add(Dropout(0.2))
-model.add(Dense  (num_hidden, activation='relu'))
+model.add(Dense  (size_hidden, activation='relu', input_shape=(size_input,)))
+model.add(Dropout(0.2))#for generalization
+model.add(Dense  (size_hidden, activation='relu'))
 model.add(Dropout(0.2))#regularization technic by removing some nodes
-model.add(Dense  (num_classes, activation='softmax'))# last layer always has softmax(except for regession problems and  binary- 2 classes where sigmoid is enough)
+model.add(Dense  (size_output, activation='softmax'))# last layer always has softmax(except for regession problems and  binary- 2 classes where sigmoid is enough)
 # For binary classification, softmax & sigmoid should give the same results, because softmax is a generalization of sigmoid for a larger number of classes.
 # softmax:  loss: 0.3099 - acc: 0.8489 - val_loss: 0.2929 - val_acc: 0.8249
 # sigmoid:  loss: 0.2999 - acc: 0.8482 - val_loss: 0.1671 - val_acc: 0.9863
@@ -203,8 +204,8 @@ print('\n======================================')
 layers = model.layers
 #B_Output_Hidden = model.layers[0].get_weights()[1]
 #print ('model.layers=\n', layers)
-print ('model.inputs=\n', num_input)
-print ('model.output=\n', num_classes)
+print ('model.inputs=\n', size_input)
+print ('model.output=\n', size_output)
 
 print('\nplot_accuracy_loss_vs_time...')
 history_dict = history.history
