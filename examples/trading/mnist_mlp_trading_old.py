@@ -59,6 +59,15 @@ def kpi_sharpeRatio():
 
 
 
+def softmax(z):
+    assert len(z.shape) == 2
+    s = np.max(z, axis=1)
+    s = s[:, np.newaxis]
+    e_x = np.exp(z - s)
+    div = np.sum(e_x, axis=1)
+    div = div[:, np.newaxis]
+    return e_x / div
+
 def loss_log():
     return 2
 
@@ -73,41 +82,25 @@ def activation_sigmoid():
     return 2
 
 
-def activation_softmax(z):
-    assert len(z.shape) == 2
-    s = np.max(z, axis=1)
-    s = s[:, np.newaxis]
-    e_x = np.exp(z - s)
-    div = np.sum(e_x, axis=1)
-    div = div[:, np.newaxis]
-    return e_x / div
-
-def activation_reLU():
-    return 2
-
-def plot_selected(df, columns, shouldNormalize = True):
+def plot_selected(df, columns, start_index, end_index, shouldNormalize = True):
     """Plot the desired columns over index values in the given range."""
     #df = df[columns][start_index:end_index]
-    #df = df.loc[start_index:end_index, columns]
-    df = df.loc[:, columns]
-    ylabel="Price"
-    normal = "un normalized"
+    df.loc[start_index:end_index, columns]
     if shouldNormalize:
-        df = normalize(df.loc[:,['Close',   'sma200']])
-        ylabel = "%"
-        normal = "normalized"
-    print('df.shape in plot=',df.shape)
-    plot_data(df, title='stock price ('+normal+')', ylabel=ylabel)
+        df = normalize(df)
+    plot_data(df, title='stock price (normalized)')
 
 
 
 
-def plot_data(df, title="normalized Stock prices", ylabel="Price"):
+
+def plot_data(df, title="stock price"):
     """Plot stock prices with a custom title and meaningful axis labels."""
     ax = df.plot(title=title, fontsize=12)
     ax.set_xlabel("Date")
-    ax.set_ylabel(ylabel)
+    ax.set_ylabel("Price")
     plt.show()
+
 
 def plot_image(df, title):
     plt.figure()
@@ -137,10 +130,10 @@ def plot_stat_loss_vs_time(history_dict) :
     epochs = range(1, len(acc) + 1)
 
     # "bo" is for "blue dot"
-    plt.plot(epochs, loss   , 'bo', label='train loss')
+    plt.plot(epochs, loss   , 'bo', label='Training loss')
     # b is for "solid blue line"
-    plt.plot(epochs, val_loss, 'b', label='test loss')
-    plt.title('train & test loss over time')
+    plt.plot(epochs, val_loss, 'b', label='Validation loss')
+    plt.title('Training and validation loss over time')
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
     plt.legend()
@@ -153,9 +146,9 @@ def plot_stat_accuracy_vs_time(history_dict) :
     val_loss = history_dict['val_loss']
     epochs = range(1, len(acc) + 1)
 
-    plt.plot(epochs, acc    , 'bo', label='train acc')
-    plt.plot(epochs, val_acc, 'b' , label='test acc')
-    plt.title('train & test accuracy over time')
+    plt.plot(epochs, acc    , 'bo', label='Training acc')
+    plt.plot(epochs, val_acc, 'b' , label='Validation acc')
+    plt.title('Training and validation accuracy over time')
     plt.xlabel('Epochs')
     plt.ylabel('Accuracy')
     plt.legend()
@@ -188,7 +181,7 @@ def symbol_to_path(symbol, base_dir=""):
     return os.path.join(base_dir, "{}.csv".format(str(symbol)))
 
 
-def get_data_from_disc_join(symbols, dates):
+def get_data_from_disc(symbols, dates):
     """Read stock data (adjusted close) for given symbols from CSV files."""
     df = pd.DataFrame(index=dates)
     if 'GOOG' not in symbols:  # add GOOG for reference, if absent
@@ -206,58 +199,41 @@ def get_data_from_disc_join(symbols, dates):
 
     return df
 
-def get_data_from_disc(symbol):
+def get_data(symbols, dates):
     """Read stock data (adjusted close) for given symbols from CSV files.
     https://finance.yahoo.com/quote/%5EGSPC/history?period1=-630986400&period2=1563138000&interval=1d&filter=history&frequency=1d
     """
 
-    df1 = pd.read_csv(  symbol_to_path(symbol)
-                          , index_col  = 'Date'
-                          , parse_dates= True
-                          , usecols    = ['Date', 'Close', 'Open', 'High', 'Low']
-                          , na_values  = ['nan'])
+    df = pd.DataFrame(index=dates)
+    if 'SP500' not in symbols:  # add GOOG for reference, if absent
+        symbols.insert(0, 'SP500')
 
+    for symbol in symbols:
+        df_temp = pd.read_csv(  symbol_to_path(symbol)
+                              , index_col  = 'Date'
+                              , parse_dates= True
+                              , usecols    = ['Date', 'Adj Close']
+                              , na_values  = ['nan'])
 
+        df_temp = df_temp.rename(columns={'Adj Close': symbol})
+        print(df_temp.head())
+        sma10 = df_temp.rolling(window=10).mean()
+        sma20 = df_temp.rolling(window=20).mean()
+        print ('sma_20=',sma20)
+        print ('sma_10=',sma10)
+        sma10 = sma10.rename(columns={symbol: symbol+'sma10'})
+        sma20 = sma20.rename(columns={symbol: symbol+'sma20'})
+        df = df.join(df_temp)\
+               .join(sma10)\
+               .join(sma20)
+        if symbol == 'SP500':
+            df = df.dropna(subset=["SP500"])# drop dates GOOG did not trade
 
-    df1['sma10'] = df1['Close'].rolling(window=10).mean()
-    df1['sma20'] = df1['Close'].rolling(window=20).mean()
-    df1['sma50'] = df1['Close'].rolling(window=50).mean()
-    df1['sma200'] = df1['Close'].rolling(window=200).mean()
-
-    df1 = df1[-(df1.shape[0]-3600):]  # skip 1st 200 rows due to NAN in sma, range
-    print ('\ndf1=\n',df1.tail())
-    print ('\nsma_10=\n',df1['sma10'] )
-    print ('\nsma_20=\n',df1['sma20'] )
-
-    df1['range'] = df1['Close']-df1['Open']
-    print ('\nrange=\n',df1['range'])
-    df1['range_sma'] = df1['sma10'] - df1['sma20']
-    #df1['isUp'] = 0
-    print(df1)
-    #df1['isUp']  = np.random.randint(2, size=df1.shape[0])
-    # if df1['range'] > 0.0:
-    #     df1['isUp'] = 1
-    # else:
-    #     df1['isUp'] = 0
-    df1.loc[df1.range >  0.0, 'isUp'] = 1
-    df1.loc[df1.range <= 0.0, 'isUp'] = 0
-
-#direction = (close > close.shift()).astype(int)
-    #target = direction.shift(-1).fillna(0).astype(int)
-    #target.name = 'target'
-    #sma10 = sma10.rename(columns={symbol: symbol+'sma10'})
-    #sma20 = sma20.rename(columns={symbol: symbol+'sma20'})
-    #df1 = df1.rename(columns={'Close': symbol+'Close'})
-
-
-    print('columns=', df1.columns)
-    print ('\ndf1=\n',df1.loc[:, ['Open','High', 'Low', 'Close', 'range', 'isUp']])
-    print ('\ndf1=\n',df1.loc[:, ['sma10','sma20','sma50','sma200','range_sma']])
-    return df1
+    return df
 
 
 def get_data_from_web(symbol):
-    start, end = '1970-01-03','2019-07-12'#'2007-05-02', '2016-04-11'
+    start, end = '1950-01-03','2019-07-12'#'2007-05-02', '2016-04-11'
     data = web.DataReader(symbol, 'yahoo', start, end)
     data=pd.DataFrame(data)
     prices=data['Adj Close']
@@ -294,10 +270,9 @@ def kpi_sharpeRatio():
 
 
 
-print('\nLoading  data')
-print('\n======================================')
+print('Loading train & test data')
 # Define date range
-start_date, end_date='1970-01-03','2019-07-12'
+start_date, end_date='1950-01-03','2019-07-12'
 dates=pd.date_range(start_date,end_date)
 print("dates="  ,dates)
 print("date[0]=",dates[0])
@@ -306,26 +281,32 @@ print("date[0]=",dates[0])
 symbols = []#'TSLA', 'GOOG', 'FB']  # SPY will be added in get_data()
 
 # Get stock data
-df_all = get_data_from_disc('SP500')
-print(df_all.tail())
+df = get_data(symbols, dates)
+print(df.tail())
+print(df.describe())
 
 # Slice and plot
-plot_selected(df_all, [  'Close', 'sma200'], shouldNormalize=True)
+plot_selected(df, symbols, start_date, end_date, shouldNormalize=True)
 
 # Slice and plot
-plot_selected(df_all, [ 'Close',  'sma200'],  shouldNormalize=False)
-#plot_selected(df, ['Date','Close']                                    , start_date, end_date, shouldNormalize=False)
-elements = df_all.size
-shape=df_all.shape
-
-
-
-print('\nsplit to train & test data')
-print('\n======================================')
-df_data = df_all.loc[:,   [ 'Open', 'High', 'Low', 'Close', 'sma10', 'sma20', 'sma50',  'sma200', 'range', 'range_sma']]
-print('\ndata stats=\n',df_data.describe())
+plot_selected(df, symbols, start_date, end_date, shouldNormalize=False)
+elements = df.size
+shape=df.shape
 print('shape=',str(shape), " elements="+str(elements), ' rows=',str(shape[0]))
-(x_train, x_test)  = train_test_split(df_data.values, test_size=0.33, shuffle=False)
+(x_train, x_test)  = train_test_split(df.values, test_size=0.33, shuffle=False)
+
+
+print('Labeling data')
+y = np.random.randint(0,2,size=(shape[0], ))
+#print(y)
+df_y = pd.DataFrame()#, columns=list('is_up'))
+df_y['isUp'] = y
+#print(df_y)
+(y_train, y_test)  = train_test_split(y, test_size=0.33, shuffle=False)
+print(df_y.tail())
+print(df_y.describe())
+#(x_train, y_train)  = train_test_split(df.as_matrix(), test_size=0.33, shuffle=False)
+
 
 print('\ntrain data', x_train.shape)
 print(x_train[0])
@@ -338,22 +319,10 @@ print(x_test[0])
 print(x_test[1])
 
 
-print('\nLabeling')
-print('\n======================================')
-df_y = df_all['isUp']#np.random.randint(0,2,size=(shape[0], ))
-#y = np.random.randint(0,2,size=(shape[0], ))
-#print(y)
-#df_y = pd.DataFrame()#, columns=list('is_up'))
-#df_y['isUp'] = y
-print(df_y)
-(y_train, y_test)  = train_test_split(df_y.values, test_size=0.33, shuffle=False)
-print(df_y.tail())
-print('\nlabel describe\n',df_y.describe())
-#(x_train, y_train)  = train_test_split(df.as_matrix(), test_size=0.33, shuffle=False)
-
 print('\ntrain labels',y_train.shape)
 print(y_train[0])
 print(y_train[1])
+
 
 print('\ntest labels', y_test.shape)
 print(y_test[0])
@@ -378,7 +347,7 @@ print( x_test.shape[0], 'test samples')
 
 
 batch_size  = 128# we cannot pass the entire data into network at once , so we divide it to batches . number of samples that we will pass through the network at 1 time and use for each epoch. default is 32
-epochs      = 250 #  iterations. on each, train all data, then evaluate, then adjust parameters (weights and biases)
+epochs      = 12 #  iterations. on each, train all data, then evaluate, then adjust parameters (weights and biases)
 #iterations  = 60000/128
 num_input   = x_train.shape[1] # features
 num_hidden  = 512 # If a model has more hidden units (a higher-dimensional representation space), and/or more layers, then the network can learn more complex representations. However, it makes the network more computationally expensive and may lead to overfit
@@ -388,23 +357,15 @@ num_classes = 2 # there are 3 classes (buy.sell. hold) or (green,red,hold)
 
 
 print('\nClean data)')
-print('\n======================================')
 #dataset.isna().sum()
 #dataset = dataset.dropna()
 
 print('\nNormalize   to    0-1 (float)')
 x_train = tf.keras.utils.normalize(x_train, axis=1)
 x_test  = tf.keras.utils.normalize(x_test , axis=1)
-#print('columns=', x_train.columns)
-#print ('\ndf1=\n',x_train.loc[:, ['Open','High', 'Low', 'Close', 'range']])
-#print ('\ndf1=\n',x_train.loc[:, ['sma10','sma20','sma50','sma200','range_sma']])
 print(x_train[0])
-print(x_train)
 #print(x_train2[0])
 #plot_image(x_test,'picture example')
-
-print('\nRebalancing')
-
 
 print('\nTransform data. Convert class vectors to binary class matrices (for ex. convert digit 7 to bit array[0. 0. 0. 0. 0. 0. 0. 1. 0. 0.]')
 y_train = keras.utils.to_categorical(y_train, num_classes)
@@ -413,7 +374,6 @@ print('y_train[0]=', y_train[0])
 print('y_test [0]=',  y_test[0])
 
 print('\ncreate model...')
-print('\n======================================')
 model = Sequential()# stack of layers
 #model.add(tf.keras.layers.Flatten())
 model.add(Dense  (num_hidden, activation='relu', input_shape=(num_input,)))
@@ -430,7 +390,6 @@ model.compile(loss      = 'categorical_crossentropy',# measure how accurate the 
 
 
 print('\ntrain model...')
-print('\n======================================')
 history = model.fit(  x_train
                     , y_train
                     , batch_size     = batch_size
@@ -439,10 +398,6 @@ history = model.fit(  x_train
                     , verbose        = 1
                   # , callbacks=[early_stop, PrintDot()]#Early stopping is a useful technique to prevent overfitting.
                       )
-
-
-print('\nEvaluate the model with unseen data. pls validate that test accuracy =~ train accuracy and close to 1.0')
-print('\n======================================')
 
 print('\nplot_accuracy_loss_vs_time...')
 history_dict = history.history
@@ -454,9 +409,10 @@ hist['epoch'] = history.epoch
 print(hist.tail())
 plot_stat_train_vs_test(history)
 
-score = model.evaluate(x_test, y_test, verbose=0)                                     # random                                |  calc label
-print('Test loss:    ', score[0], ' (is it close to 0?)')                            #Test,train loss     : 0.6938 , 0.6933   |  0.47  0.5
-print('Test accuracy:', score[1], ' (is it close to 1 and close to train accuracy?)')#Test,train accuracy : 0.5000 , 0.5000   |  0.69, 0.74
+print('\nEvaluate the model with unseen data. pls validate that test accuracy =~ train accuracy and close to 1.0')
+score = model.evaluate(x_test, y_test, verbose=0)
+print('Test loss:'    , score[0], ' (is it close to 0?)')#Test loss: 0.089
+print('Test accuracy:', score[1], ' (is it close to 1 and close to train accuracy?)')#Test accuracy here: 0.9825, Test accuracy in mnist_cnn: 0.9903
 
 print('\nPredict unseen data with 10 probabilities for 10 classes(choose the highest)')
 predictions = model.predict(x_test)
@@ -467,15 +423,4 @@ filename='mnist_mlp.model'
 print('\nSave model as ',filename)
 model.save(filename)# 5.4 mb
 newModel = tf.keras.models.load_model(filename)
-
-
-
-
-
-
-
-
-
-
-
 
