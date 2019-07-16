@@ -216,6 +216,7 @@ hist = pd.DataFrame(history.history)
 hist['epoch'] = history.epoch
 print(hist.tail())
 ut.plot_stat_train_vs_test(history)
+ut.plot_stat_loss_vs_accuracy(history_dict)
 
 score = model.evaluate(x_test, y_test, verbose=0)                                     # random                                |  calc label
 print('Test loss:    ', score[0], ' (is it close to 0?)')                            #Test,train loss     : 0.6938 , 0.6933   |  0.47  0.5

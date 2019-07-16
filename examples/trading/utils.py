@@ -80,18 +80,37 @@ def plot_images(x,y, title):
         plt.xlabel(y[i])
     plt.show()
 
-def plot_stat_loss_vs_time(history_dict) :
-    acc      = history_dict['acc']
-    val_acc  = history_dict['val_acc']
-    loss     = history_dict['loss']
-    val_loss = history_dict['val_loss']
+def plot_stat_loss_vs_accuracy(history_dict) :
+    acc_train  = history_dict['acc']
+    acc_test   = history_dict['val_acc']
+    loss_train = history_dict['loss']
+    loss_test  = history_dict['val_loss']
 
-    epochs = range(1, len(acc) + 1)
+    epochs = range(1, len(acc_train) + 1)
 
     # "bo" is for "blue dot"
-    plt.plot(epochs, loss   , 'bo', label='train loss')
+    plt.plot(epochs, loss_train   , 'b', color='blue',label='train loss')
+    plt.plot(epochs, loss_test    , 'b', color='green',label='test_loss')
     # b is for "solid blue line"
-    plt.plot(epochs, val_loss, 'b', label='test loss')
+    plt.plot(epochs, acc_train, 'b', color='red'   , label='train accuracy')
+    plt.plot(epochs, acc_test , 'b', color='orange', label='test  accuracy')
+    plt.title('train & test loss & accuracy over time')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss& accuracy')
+    plt.legend()
+    plt.show()
+
+def plot_stat_loss_vs_time(history_dict) :
+    acc_train  = history_dict['acc']
+    acc_test   = history_dict['val_acc']
+    loss_train = history_dict['loss']
+    loss_test  = history_dict['val_loss']
+    epochs = range(1, len(acc_train) + 1)
+
+    # "bo" is for "blue dot"
+    plt.plot(epochs, loss_train   , 'bo', label='train loss')
+    # b is for "solid blue line"
+    plt.plot(epochs, loss_test, 'b', label='test loss')
     plt.title('train & test loss over time')
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
@@ -111,7 +130,6 @@ def plot_stat_accuracy_vs_time(history_dict) :
     plt.xlabel('Epochs')
     plt.ylabel('Accuracy')
     plt.legend()
-
     plt.show()
 
 
