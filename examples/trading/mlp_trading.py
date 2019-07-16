@@ -30,7 +30,7 @@ import keras
 from keras.layers import Dense, Dropout
 from keras.models import Sequential
 from keras.optimizers import RMSprop
-
+import matplotlib.pyplot as plt
 #import pandas.io.data as web
 
 # https://towardsdatascience.com/deep-learning-for-beginners-practical-guide-with-python-and-keras-d295bfca4487
@@ -128,7 +128,7 @@ epochs      = 25 #  iterations. on each, train all data, then evaluate, then adj
 num_input   = x_train.shape[1] # features
 num_hidden  = 512 # If a model has more hidden units (a higher-dimensional representation space), and/or more layers, then the network can learn more complex representations. However, it makes the network more computationally expensive and may lead to overfit
 num_classes = 2 # there are 3 classes (buy.sell. hold) or (green,red,hold)
-
+class_names = ['Green bar', 'Red Bar']# 'no direction Bar'
 #iterations  = 60000/128
 
 
@@ -167,6 +167,9 @@ model.add(Dense  (num_hidden, activation='relu'))
 model.add(Dropout(0.2))#regularization technic by removing some nodes
 model.add(Dense  (num_classes, activation='softmax'))# last layer always has softmax(except for regession problems and  binary- 2 classes where sigmoid is enough)
 # Prints a string summary of the  neural network.')
+# softmax:  loss: 0.3099 - acc: 0.8489 - val_loss: 0.2929 - val_acc: 0.8249
+# sigmoid:  loss: 0.2999 - acc: 0.8482 - val_loss: 0.1671 - val_acc: 0.9863
+
 model.summary()
 model.compile(loss      = 'categorical_crossentropy',# measure how accurate the model during training
               optimizer = RMSprop(),#this is how model is updated based on data and loss function
@@ -192,6 +195,9 @@ history = model.fit(  x_train
 
 print('\nEvaluate the model with unseen data. pls validate that test accuracy =~ train accuracy and close to 1.0')
 print('\n======================================')
+layers = model.layers
+#B_Output_Hidden = model.layers[0].get_weights()[1]
+print ('model.weights=\n', model.get_weights())
 
 print('\nplot_accuracy_loss_vs_time...')
 history_dict = history.history
@@ -208,14 +214,33 @@ print('Test loss:    ', score[0], ' (is it close to 0?)')                       
 print('Test accuracy:', score[1], ' (is it close to 1 and close to train accuracy?)')#Test,train accuracy : 0.5000 , 0.5000   |  0.69, 0.74
 
 print('\nPredict unseen data with 10 probabilities for 10 classes(choose the highest)')
-predictions = model.predict(x_test)
+Y_pred = model.predict(x_test)
 print('labeled   as ', y_test[0]     , ' highest confidence for ' , np.argmax(y_test[0]))
-print('predicted as ' ,predictions[0], ' highest confidence for ' , np.argmax(predictions[0]))
+print('predicted as ' ,Y_pred[0], ' highest confidence for ' , np.argmax(Y_pred[0]))
+y_pred = np.argmax(Y_pred, axis=1)
+print('prediction list= ' , y_pred.tolist())
+#print('true label list= ' , y_test.tolist())
 
-filename='mnist_mlp.model'
+
+
+filename='mlp_trading.model'
 print('\nSave model as ',filename)
 model.save(filename)# 5.4 mb
 newModel = tf.keras.models.load_model(filename)
+
+
+
+np.set_printoptions(precision=2)
+#
+# # Plot non-normalized confusion matrix
+# ut.plot_confusion_matrix(y_test, y_pred, classes=class_names,
+#                       title='Confusion matrix, without normalization')
+#
+# # Plot normalized confusion matrix
+# ut.plot_confusion_matrix(y_test, y_pred, classes=class_names, normalize=True,
+#                       title='Normalized confusion matrix')
+
+
 
 
 

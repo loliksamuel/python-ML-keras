@@ -57,28 +57,6 @@ def kpi_sharpeRatio():
 
 
 
-def softmax(z):
-    assert len(z.shape) == 2
-    s = np.max(z, axis=1)
-    s = s[:, np.newaxis]
-    e_x = np.exp(z - s)
-    div = np.sum(e_x, axis=1)
-    div = div[:, np.newaxis]
-    return e_x / div
-
-def loss_log():
-    return 2
-
-def loss_mse():
-    return 2
-
-
-def loss_gdc():
-    return 2
-
-def activation_sigmoid():
-    return 2
-
 
 def plot_selected(df, columns, start_index, end_index):
     """Plot the desired columns over index values in the given range."""

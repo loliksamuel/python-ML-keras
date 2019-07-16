@@ -138,7 +138,7 @@ plt.plot(data_input[0][:10], '.')
 plt.plot(expected_output[0][:10], '-')
 plt.legend(['Input', 'Expected output'])
 plt.title('Input')
-plt.show()
+#plt.show()
 
 
 def create_model(stateful):
@@ -240,4 +240,4 @@ plt.title('Stateful: Expected - Predicted')
 plt.subplot(3, 1, 3)
 plt.plot((y_test - predicted_stateless).flatten())
 plt.title('Stateless: Expected - Predicted')
-plt.show()
+#plt.show()

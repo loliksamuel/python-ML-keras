@@ -85,4 +85,4 @@ class_activation_map = postprocess(preds, cams)
 plt.imshow(original_img, alpha=0.5)
 plt.imshow(cv2.resize(class_activation_map,
                       original_size), cmap='jet', alpha=0.5)
-plt.show()
+#plt.show()
