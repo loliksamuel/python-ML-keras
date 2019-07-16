@@ -37,29 +37,37 @@ import matplotlib.pyplot as plt
 # https://towardsdatascience.com/deep-learning-for-beginners-practical-guide-with-python-and-keras-d295bfca4487
 # https://www.youtube.com/watch?v=aircAruvnKk
 
+batch_size  = 128# we cannot pass the entire data into network at once , so we divide it to batches . number of samples that we will pass through the network at 1 time and use for each epoch. default is 32
+epochs      = 50 #  iterations. on each, train all data, then evaluate, then adjust parameters (weights and biases)
+#iterations  = 60000/128
+size_input   = 10#x_train.shape[1] # no of features
+size_hidden  = 512 # If a model has more hidden units (a higher-dimensional representation space), and/or more layers, then the network can learn more complex representations. However, it makes the network more computationally expensive and may lead to overfit
+size_output  = 2 # there are 3 classes (buy.sell. hold) or (green,red,hold)
+name_output  = ['Green bar', 'Red Bar']# 'no direction Bar'
+#iterations  = 60000/128
+symbol       = 'SP500' #SP500 (3600) DJI(300) GOOG XLF XLV QQQ
 
 
-
-print('\nLoading  sp500 data')
+print('\nLoading  data')
 print('\n======================================')
 # Define date range
-start_date, end_date='1970-01-03','2019-07-12'
-dates=pd.date_range(start_date,end_date)
-print("dates="  ,dates)
-print("date[0]=",dates[0])
-
-# Define stock symbols
-symbols = []#'TSLA', 'GOOG', 'FB']  # SPY will be added in get_data()
+# start_date, end_date='1970-01-03','2019-07-12'
+# dates=pd.date_range(start_date,end_date)
+# print("dates="  ,dates)
+# print("date[0]=",dates[0])
+#
+# # Define stock symbols
+# symbols = []#'TSLA', 'GOOG', 'FB']  # SPY will be added in get_data()
 
 # Get stock data
-df_all = ut.get_data_from_disc('SP500')
+df_all = ut.get_data_from_disc(symbol, 3600)
 print(df_all.tail())
 
 # Slice and plot
-#ut.plot_selected(df_all, [  'Close', 'sma200'], shouldNormalize=True)
+#ut.plot_selected(df_all, [  'Close', 'sma200'], shouldNormalize=True, symbol=symbol)
 
 # Slice and plot
-ut.plot_selected(df_all, [ 'Close',  'sma200'],  shouldNormalize=False)
+ut.plot_selected(df_all, [ 'Close',  'sma200'],  shouldNormalize=False, symbol=symbol)
 #plot_selected(df, ['Date','Close']                                    , start_date, end_date, shouldNormalize=False)
 elements = df_all.size
 shape=df_all.shape
@@ -144,14 +152,7 @@ print(x_train)
 print('\nRebalancing')
 
 
-batch_size  = 128# we cannot pass the entire data into network at once , so we divide it to batches . number of samples that we will pass through the network at 1 time and use for each epoch. default is 32
-epochs      = 50 #  iterations. on each, train all data, then evaluate, then adjust parameters (weights and biases)
-#iterations  = 60000/128
-size_input   = x_train.shape[1] # no of features
-size_hidden  = 512 # If a model has more hidden units (a higher-dimensional representation space), and/or more layers, then the network can learn more complex representations. However, it makes the network more computationally expensive and may lead to overfit
-size_output  = 2 # there are 3 classes (buy.sell. hold) or (green,red,hold)
-name_output  = ['Green bar', 'Red Bar']# 'no direction Bar'
-#iterations  = 60000/128
+
 
 print('\nTransform data. Convert class vectors to binary class matrices (for ex. convert digit 7 to bit array[0. 0. 0. 0. 0. 0. 0. 1. 0. 0.]')
 y_train = keras.utils.to_categorical(y_train, size_output)
@@ -161,6 +162,7 @@ print('y_test [0]=',  y_test[0])
 
 print('\ncreate model...')
 print('\n======================================')
+size_input   = x_train.shape[1] # no of features
 
 model = Sequential()# stack of layers
 #model.add(tf.keras.layers.Flatten())
@@ -233,7 +235,7 @@ Y_test = np.argmax(y_test, axis=1)
 
 
 
-filename='mlp_trading.model'
+filename='mlp_trading_'+symbol+'.model'
 print('\nSave model as ',filename)
 model.save(filename)# 5.4 mb
 newModel = tf.keras.models.load_model(filename)

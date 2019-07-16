@@ -37,7 +37,7 @@ def kpi_sharpeRatio():
 
 
 
-def plot_selected(df, columns, shouldNormalize = True):
+def plot_selected(df, columns, shouldNormalize = True, symbol='any stock'):
     """Plot the desired columns over index values in the given range."""
     #df = df[columns][start_index:end_index]
     #df = df.loc[start_index:end_index, columns]
@@ -49,7 +49,7 @@ def plot_selected(df, columns, shouldNormalize = True):
         ylabel = "%"
         normal = "normalized"
     print('df.shape in plot=',df.shape)
-    plot_data(df, title='stock price ('+normal+')', ylabel=ylabel)
+    plot_data(df, title=symbol+' price ('+normal+')', ylabel=ylabel)
 
 
 
@@ -173,7 +173,7 @@ def get_data_from_disc_join(symbols, dates):
 
     return df
 
-def get_data_from_disc(symbol):
+def get_data_from_disc(symbol, skipFirstLines):
     """Read stock data (adjusted close) for given symbols from CSV files.
     https://finance.yahoo.com/quote/%5EGSPC/history?period1=-630986400&period2=1563138000&interval=1d&filter=history&frequency=1d
     """
@@ -191,7 +191,7 @@ def get_data_from_disc(symbol):
     df1['sma50'] = df1['Close'].rolling(window=50).mean()
     df1['sma200'] = df1['Close'].rolling(window=200).mean()
 
-    df1 = df1[-(df1.shape[0]-3600):]  # skip 1st x rows, x years due to NAN in sma, range
+    df1 = df1[-(df1.shape[0]-skipFirstLines):]  # skip 1st x rows, x years due to NAN in sma, range
     print ('\ndf1=\n',df1.tail())
     print ('\nsma_10=\n',df1['sma10'] )
     print ('\nsma_20=\n',df1['sma20'] )
