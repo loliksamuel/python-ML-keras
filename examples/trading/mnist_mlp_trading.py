@@ -20,15 +20,16 @@ priority | name
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import tensorflow as tf
+
 import numpy as np
 import pandas as pd
+import tensorflow as tf
 import keras
-import utils as ut
 from keras.datasets import mnist
 from keras.models import Sequential
 from keras.layers import Dense, Dropout
 from keras.optimizers import RMSprop
+import utils as ut
 import matplotlib.pyplot as plt
 import random
 #import pandas.io.data as web
