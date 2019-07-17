@@ -2,14 +2,12 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import math
-# import pandas.io.data as web
 import os
-
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+
 import pandas_datareader.data as pdr
 
 
@@ -192,8 +190,8 @@ def get_data_from_disc(symbol, skipFirstLines):
     df1['sma20' ] = df1['Close'].rolling(window=20).mean()
     df1['sma50' ] = df1['Close'].rolling(window=50).mean()
     df1['sma200'] = df1['Close'].rolling(window=200).mean()
-
     df1 = df1[-(df1.shape[0]-skipFirstLines):]  # skip 1st x rows, x years due to NAN in sma, range
+
     print ('\ndf1=\n',df1.tail())
     print ('\nsma_10=\n',df1['sma10'] )
     print ('\nsma_20=\n',df1['sma20'] )
@@ -217,7 +215,6 @@ def get_data_from_disc(symbol, skipFirstLines):
     #sma10 = sma10.rename(columns={symbol: symbol+'sma10'})
     #sma20 = sma20.rename(columns={symbol: symbol+'sma20'})
     #df1 = df1.rename(columns={'Close': symbol+'Close'})
-
 
     print('columns=', df1.columns)
     print ('\ndf1=\n',df1.loc[:, ['Open','High', 'Low', 'Close', 'range', 'isUp']])

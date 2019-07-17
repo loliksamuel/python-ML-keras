@@ -82,7 +82,8 @@ shape=df_all.shape
 
 print('\nsplit to train & test data')
 print('\n======================================')
-df_data = df_all.loc[:,   [ 'Open', 'High', 'Low', 'Close', 'sma10', 'sma20', 'sma50',  'sma200', 'range', 'range_sma']]
+#df_data = df_all.loc[:,   [ 'Open', 'High', 'Low', 'Close', 'sma10', 'sma20', 'sma50',  'sma200', 'range', 'range_sma']]
+df_data = df_all.loc[:,   [ 'sma10', 'sma20', 'sma50',  'sma200',  'range_sma']]
 print('\ndata describe=\n',df_data.describe())
 print('shape=',str(shape), " elements="+str(elements), ' rows=',str(shape[0]))
 (x_train, x_test)  = train_test_split(df_data.values, test_size=0.33, shuffle=False)
@@ -207,7 +208,7 @@ history = model.fit(  x_train
                       )
 
 
-print('\nEvaluate the model with unseen data. pls validate that test accuracy =~ train accuracy and close to 1.0')
+print('\nEvaluate the model with unseen data. pls validate that test accuracy =~ train accuracy and near 1.0')
 print('\n======================================')
 layers = model.layers
 #B_Output_Hidden = model.layers[0].get_weights()[1]

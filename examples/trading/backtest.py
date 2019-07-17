@@ -3,6 +3,10 @@ import yfinance as fix
 import numpy as np
 import tensorflow as tf
 from examples.trading.utils import get_data_from_disc
+import keras
+from keras.layers import Dense, Dropout
+from keras.models import Sequential
+from keras.optimizers import RMSprop
 
 fix.pdr_override()
 
@@ -20,8 +24,15 @@ def back_test(model, symbol, start_date, end_date):
     print('backtesting symbol ', symbol)
     print('==================================')
     df_all =  get_data_from_disc(symbol, 3600)
+    df_x = df_all.loc[:,   [ 'Open', 'High', 'Low', 'Close', 'sma10', 'sma20', 'sma50',  'sma200', 'range', 'range_sma']]
+    df_y = df_all['isUp']
     print(df_all.tail())
     print(df_all.shape)
+
+    print('df_y=',df_y)
+    size_output = 2
+    y = keras.utils.to_categorical(df_y, size_output)
+    print('y=',y)
     # data = pdr.get_data_yahoo(symbol, start_date, end_date)
     # closePrice = data["Close"]
     # print(closePrice)
@@ -32,30 +43,40 @@ def back_test(model, symbol, start_date, end_date):
     sell    = 0
     balance = 10000
     balanceStart = balance
+    trades=[]
     print('errors=',errors)
+    print('start trade...')
     for i in range(len(df_all)-1):
         print('i=',i)
-        currBar = df_all[(i):]
-        print(' next Bar=', df_all[(i+1):])
-        print(' data[i]=', data[i])
-        print(' data[i]=', closePrice[i])
-        x_norm = tf.keras.utils.normalize(currBar, axis=1)
-        y_train = keras.utils.to_categorical(y_train, size_output)
-        x = np.array(closePrice.iloc[i: i , 1])
-        y = np.array(closePrice.iloc[i + 1, 1])
-        print('i=',i,'x=',x,'y=',y)
-        prediction = model.predict(x)
-        print('predict=',prediction)
-        if (prediction == 1):
+        currBar = df_x[(i+0):(i+1)]
+        nextBar = df_x[(i+1):(i+2)]
+        nextBarIsUp = df_y[(i+1):(i+2)]
+        print(' curr Bar=', currBar)
+        print(' next Bar=', nextBar)
+        print(' next Bar is Up? ', nextBarIsUp)
+
+        # print(' data[i]=', data[i])
+        # print(' data[i]=', closePrice[i])
+        currBarNorm = tf.keras.utils.normalize(currBar, axis=1)
+
+
+        print('i=',i,'x_norm=', currBarNorm)
+        prediction = model.predict(currBarNorm)
+        y_pred = np.argmax(prediction, axis=1)
+        print('predict=',prediction, ' isUp?', y_pred)
+        if  y_pred == 1 :
             buy += 1
         else:
             sell +=1
-        if (prediction == y):
+        profit = nextBar['range']
+        print('profit=', profit)
+        if  nextBarIsUp  and  y_pred == 1:
             success += 1
-            balance += closePrice[i]
+
         else:
             fails += 1
-
+        balance += profit
+        trades.append(profit)
         print("longs={buy}, short = {sell}, fails = {fails} , success = {success}")
     # If you want to see the full error list then print the following statement
     print('errors=',errors)
