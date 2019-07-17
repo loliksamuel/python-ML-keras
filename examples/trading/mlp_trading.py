@@ -24,8 +24,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-import utils as ut
-import backtest as bt
+from examples.trading.utils import *
 from sklearn.model_selection import train_test_split
 
 import keras
@@ -46,7 +45,7 @@ size_hidden  = 512 # If a model has more hidden units (a higher-dimensional repr
 size_output  = 2 # there are 3 classes (buy.sell. hold) or (green,red,hold)
 name_output  = ['Green bar', 'Red Bar']# 'no direction Bar'
 #iterations  = 60000/128
-symbol       = 'SP500' #SP500 (3600) DJI(300) GOOG XLF XLV QQQ
+symbol       = '^GSPC' #SP500 (3600) DJI(300) GOOG XLF XLV QQQ
 
 
 print('\nLoading  data')
@@ -67,14 +66,14 @@ print('\n======================================')
 #
 
 # Get stock data
-df_all = ut.get_data_from_disc(symbol, 3600)
+df_all = get_data_from_disc(symbol, 3600)
 print(df_all.tail())
 
 # Slice and plot
-#ut.plot_selected(df_all, [  'Close', 'sma200'], shouldNormalize=True, symbol=symbol)
+#plot_selected(df_all, [  'Close', 'sma200'], shouldNormalize=True, symbol=symbol)
 
 # Slice and plot
-ut.plot_selected(df_all, [ 'Close',  'sma200'],  shouldNormalize=False, symbol=symbol)
+plot_selected(df_all, [ 'Close',  'sma200'],  shouldNormalize=False, symbol=symbol)
 #plot_selected(df, ['Date','Close']                                    , start_date, end_date, shouldNormalize=False)
 elements = df_all.size
 shape=df_all.shape
@@ -219,13 +218,13 @@ print ('model.output=\n', size_output)
 print('\nplot_accuracy_loss_vs_time...')
 history_dict = history.history
 print(history_dict.keys())
-ut.plot_stat_loss_vs_time     (history_dict)
-ut.plot_stat_accuracy_vs_time (history_dict)
+plot_stat_loss_vs_time     (history_dict)
+plot_stat_accuracy_vs_time (history_dict)
 hist = pd.DataFrame(history.history)
 hist['epoch'] = history.epoch
 print(hist.tail())
-ut.plot_stat_train_vs_test(history)
-ut.plot_stat_loss_vs_accuracy(history_dict)
+plot_stat_train_vs_test(history)
+plot_stat_loss_vs_accuracy(history_dict)
 
 score = model.evaluate(x_test, y_test, verbose=0)                                     # random                                |  calc label
 print('Test loss:    ', score[0], ' (is it close to 0?)')                            #Test,train loss     : 0.6938 , 0.6933   |  0.47  0.5
@@ -242,22 +241,25 @@ Y_test = np.argmax(y_test, axis=1)
 
 
 
-filename='mlp_trading_'+symbol+'.model'
+filename='mlpt_'+symbol+'_'+str(epochs)+'_'+str(size_hidden)+'.model'
 print('\nSave model as ',filename)
 model.save(filename)# 5.4 mb
-newModel = tf.keras.models.load_model(filename)
+
+
+
+
 
 data = df_all['range'] #np.random.normal(0, 20, 1000)
 bins = np.linspace(np.math.ceil(min(data)),    np.math.floor(max(data)),    100) # fixed number of bins
 
-ut.plot_histogram(  x = data
+plot_histogram(  x = data
                   , bins=100
                   , title = 'range of a bar - Gaussian data (fixed number of bins)'
                   , xlabel ='range of a bar from open to close'
                   , ylabel ='count')
 
 
-ut.plot_histogram(    x = df_all['range_sma']
+plot_histogram(    x = df_all['range_sma']
                     , bins=100
                     , title = 'diff bw 2 sma - Gaussian data (fixed number of bins)'
                     , xlabel ='diff bw 2 sma 10,20  '
@@ -271,18 +273,12 @@ ut.plot_histogram(    x = df_all['range_sma']
 np.set_printoptions(precision=2)
 #
 # # Plot non-normalized confusion matrix
-# ut.plot_confusion_matrix(y_test, y_pred, classes=class_names,
+# plot_confusion_matrix(y_test, y_pred, classes=class_names,
 #                       title='Confusion matrix, without normalization')
 #
 # # Plot normalized confusion matrix
-# ut.plot_confusion_matrix(y_test, y_pred, classes=class_names, normalize=True,
+# plot_confusion_matrix(y_test, y_pred, classes=class_names, normalize=True,
 #                       title='Normalized confusion matrix')
-
-print('\nBacktesting')
-print('\n======================================')
-
-#bt.back_test(model,10,symbol, start_date='1970-01-03', end_date='2019-01-03', dim=2)
-
 
 
 

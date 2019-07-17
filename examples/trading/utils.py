@@ -6,9 +6,11 @@ import math
 # import pandas.io.data as web
 import os
 
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import pandas_datareader.data as pdr
 
 
 def kpi_returns(prices):
@@ -186,9 +188,9 @@ def get_data_from_disc(symbol, skipFirstLines):
 
 
 
-    df1['sma10'] = df1['Close'].rolling(window=10).mean()
-    df1['sma20'] = df1['Close'].rolling(window=20).mean()
-    df1['sma50'] = df1['Close'].rolling(window=50).mean()
+    df1['sma10' ] = df1['Close'].rolling(window=10).mean()
+    df1['sma20' ] = df1['Close'].rolling(window=20).mean()
+    df1['sma50' ] = df1['Close'].rolling(window=50).mean()
     df1['sma200'] = df1['Close'].rolling(window=200).mean()
 
     df1 = df1[-(df1.shape[0]-skipFirstLines):]  # skip 1st x rows, x years due to NAN in sma, range
@@ -225,12 +227,18 @@ def get_data_from_disc(symbol, skipFirstLines):
 
 def get_data_from_web(symbol):
     start, end = '1970-01-03','2019-07-12'#'2007-05-02', '2016-04-11'
-    data = web.DataReader(symbol, 'yahoo', start, end)
-    data=pd.DataFrame(data)
-    prices=data['Adj Close']
-    prices=prices.astype(float)
+    data   = web.DataReader(symbol, 'yahoo', start, end)
+    data   = pd.DataFrame(data)
+    prices = data['Adj Close']
+    prices = prices.astype(float)
     return prices
 
+def get_data_from_web2(symbol):
+    start, end = '1970-01-03','2019-07-12'#'2007-05-02', '2016-04-11'
+    data = pdr.get_data_yahoo(symbol, start, end)
+    closePrice = data["Close"]
+    print(closePrice)
+    return closePrice
 
 def get_state(parameters, t, window_size = 20):
     outside = []
