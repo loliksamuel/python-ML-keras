@@ -9,7 +9,12 @@ import numpy as np
 import pandas as pd
 
 import pandas_datareader.data as pdr
+from alpha_vantage.timeseries     import TimeSeries
+from alpha_vantage.techindicators import TechIndicators
+from sklearn.preprocessing import StandardScaler
+from sklearn.utils import resample
 
+from ta import *
 
 def kpi_returns(prices):
     return ((prices-prices.shift(-1))/prices)[:-1]
@@ -37,7 +42,7 @@ def kpi_sharpeRatio():
 
 
 
-def plot_selected(df, columns, shouldNormalize = True, symbol='any stock'):
+def plot_selected(df, title='title', columns=[], shouldNormalize = True, symbol='any stock'):
     """Plot the desired columns over index values in the given range."""
     #df = df[columns][start_index:end_index]
     #df = df.loc[start_index:end_index, columns]
@@ -48,18 +53,41 @@ def plot_selected(df, columns, shouldNormalize = True, symbol='any stock'):
         df = normalize(df.loc[:,['Close',   'sma200']])
         ylabel = "%"
         normal = "normalized"
-    print('df.shape in plot=',df.shape)
-    plot_data(df, title=symbol+' price ('+normal+')', ylabel=ylabel)
+    #print('df.shape in plot=',df.shape)
+    plot_data(df, title=title, ylabel=ylabel)
 
 
 
 
-def plot_data(df, title="normalized Stock prices", ylabel="Price"):
+def plot_data(df, title="normalized Stock prices", ylabel="Price", xlabel="Date" ):
     """Plot stock prices with a custom title and meaningful axis labels."""
+    plt.clf()
     ax = df.plot(title=title, fontsize=12)
-    ax.set_xlabel("Date")
+    ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
-    plt.show()
+    plt.savefig('plots/model/'+title+'.png')
+
+def plot_list(list, title="TA-normalized Stock prices", ylabel="Price", xlabel="Date", dosave=1):
+    plt.plot(list)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.title(title)
+    if dosave == 1:
+        plt.savefig('plots/bt/'+title+'.png')
+
+
+
+def plot_barchart(list, title="BT", ylabel="Price", xlabel="Date"):
+    l = len(list)
+    x = range(l)
+    myarray = np.asarray(list)
+    colors = 'green'#np.array([(1,0,0)]*l)
+    colors[myarray > 0.0] = (0,0,1)
+    plt.bar(x,myarray, color=colors)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.title(title)
+    plt.savefig('plots/bt/'+title+'.png')
 
 def plot_image(df, title):
     plt.figure()
@@ -80,65 +108,65 @@ def plot_images(x,y, title):
         plt.xlabel(y[i])
     plt.show()
 
-def plot_stat_loss_vs_accuracy(history_dict) :
+def plot_stat_loss_vs_accuracy(history_dict, title='model Loss, accuracy over time') :
     acc_train  = history_dict['acc']
     acc_test   = history_dict['val_acc']
     loss_train = history_dict['loss']
     loss_test  = history_dict['val_loss']
     epochs = range(1, len(acc_train) + 1)
 
+    plt.clf()
     plt.plot(epochs, loss_train , 'b', color='red'     ,label='train loss')
     plt.plot(epochs, loss_test  , 'b', color='orange'  ,label='test_loss')
     plt.plot(epochs, acc_train  , 'b', color='green'   , label='train accuracy')
     plt.plot(epochs, acc_test   , 'b', color='blue'    , label='test  accuracy')
-    plt.title('Loss & accuracy over time')
+    plt.title(title)
     plt.xlabel('Epochs')
     plt.ylabel('Loss & accuracy')
     plt.legend()
-    plt.show()
+    plt.savefig('plots/model/'+title+'.png')
 
-def plot_stat_loss_vs_time(history_dict) :
+def plot_stat_loss_vs_time(history_dict, title='model loss over time') :
     acc_train  = history_dict['acc']
     acc_test   = history_dict['val_acc']
     loss_train = history_dict['loss']
     loss_test  = history_dict['val_loss']
     epochs = range(1, len(acc_train) + 1)
 
-    # "bo" is for "blue dot"
+    plt.clf()
     plt.plot(epochs, loss_train   , 'bo', label='train loss')
     # b is for "solid blue line"
     plt.plot(epochs, loss_test, 'b', label='test loss')
-    plt.title('train & test loss over time')
+    plt.title(title)
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
     plt.legend()
-    plt.show()
+    plt.savefig('plots/model/'+title+'.png')
 
-def plot_stat_accuracy_vs_time(history_dict) :
+
+
+
+def plot_stat_accuracy_vs_time(history_dict, title='model accuracy over time') :
     acc      = history_dict['acc']
     val_acc  = history_dict['val_acc']
     loss     = history_dict['loss']
     val_loss = history_dict['val_loss']
     epochs = range(1, len(acc) + 1)
 
+    plt.clf()
     plt.plot(epochs, acc    , 'bo', label='train acc')
     plt.plot(epochs, val_acc, 'b' , label='test acc')
-    plt.title('train & test accuracy over time')
+    plt.title(title)
     plt.xlabel('Epochs')
     plt.ylabel('Accuracy')
     plt.legend()
-    plt.show()
+    plt.savefig('plots/model/'+title+'.png')
 
 
-def plot_stat_train_vs_test(history):
-    hist = history.history
-    plt.xlabel('Epoch')
-    plt.ylabel('Error')
-    plt.plot(hist['loss'])#train loss
-    plt.plot(hist['val_loss'])#validation loss
-    plt.title    ('model loss')
-    plt.legend   (['train Error', 'test Error'], loc='upper right')
-    plt.show()
+
+def plot_live(y_profit, x_trade, title='title', xlabel='xlabel', ylabel='ylabel'):
+    x=1
+    # plt.clf()
 
 # normalize to first row
 def normalize(df):
@@ -148,6 +176,13 @@ def normalize(df):
 def normalize2(x):
     train_stats = x.describe()
     return (x - train_stats['mean']) / train_stats['std']
+
+def normalize3(x):
+
+    scaler = StandardScaler()
+    x_norm = scaler.fit_transform(x.values)
+    x_norm = pd.DataFrame(x_norm, index=x.index, columns=x.columns)
+    return x_norm
 
 
 def symbol_to_path(symbol, base_dir=""):
@@ -173,6 +208,94 @@ def get_data_from_disc_join(symbols, dates):
 
     return df
 
+
+
+
+'from year 2000 only https://www.alphavantage.co'
+def calc_indicators2(symbol):
+    YOUR_API_KEY = '7JRR5YWCLV4KGB9U'
+    # Technical Indicators
+    ti = TechIndicators(key='7JRR5YWCLV4KGB9U', output_format='pandas')
+    ts = TimeSeries    (key='7JRR5YWCLV4KGB9U', output_format='pandas')
+    sma, _   = ti.get_sma  (symbol=symbol, interval='daily', time_period=20, series_type='close')
+    wma, _   = ti.get_wma  (symbol=symbol, interval='daily')
+    ema, _   = ti.get_ema  (symbol=symbol, interval='daily')
+    macd, _  = ti.get_macd (symbol=symbol, interval='daily')
+    stoc, _  = ti.get_stoch(symbol=symbol, interval='daily')
+    rsi, _   = ti.get_rsi  (symbol=symbol, interval='daily')
+    adx, _   = ti.get_adx  (symbol=symbol, interval='daily')
+    cci, _   = ti.get_cci  (symbol=symbol, interval='daily')
+    aroon, _ = ti.get_aroon(symbol=symbol, interval='daily')
+    bands, _ = ti.get_bbands(symbol=symbol, interval='daily')
+    ad, _    = ti.get_ad    (symbol=symbol, interval='daily')
+    obv, _   = ti.get_obv   (symbol=symbol, interval='daily')
+    mom, _   = ti.get_mom   (symbol=symbol, interval='daily')
+    willr, _ = ti.get_willr (symbol=symbol, interval='daily')
+    tech_ind = pd.concat([sma, ema, macd, stoc, rsi, adx, cci, aroon, bands, ad, obv, wma, mom, willr], axis=1)
+
+
+    close = ts.get_daily(symbol=symbol, outputsize='full')[0]['close']   # compact/full
+    direction = (close > close.shift()).astype(int)
+    target = direction.shift(-1).fillna(0).astype(int)
+    target.name = 'target'
+
+    data = pd.concat([tech_ind, close, target], axis=1)
+
+    return data
+
+
+def calc_indicators(data, n):
+
+    hh = data['high'].rolling(n).max()
+    ll = data['low'].rolling(n).min()
+    up, dw = data['close'].diff(), -data['close'].diff()
+    up[up<0], dw[dw<0] = 0, 0
+    macd = data['close'].ewm(12).mean() - data['close'].ewm(26).mean()
+    macd_signal = macd.ewm(9).mean()
+    tp = (data['high'] + data['low'] + data['close']) / 3
+    tp_ma = tp.rolling(n).mean()
+    indicators = pd.DataFrame(data=0, index=data.index,
+                              columns=['sma', 'ema', 'momentum',
+                                       'sto_k', 'sto_d', 'rsi',
+                                       'macd', 'lw_r', 'a/d', 'cci'])
+    indicators['sma'] = data['close'].rolling(10).mean()
+    indicators['ema'] = data['close'].ewm(10).mean()
+    indicators['momentum'] = data['close'] - data['close'].shift(n)
+    indicators['sto_k'] = (data['close'] - ll) / (hh - ll) * 100
+    indicators['sto_d'] = indicators['sto_k'].rolling(n).mean()
+    indicators['rsi'] = 100 - 100 / (1 + up.rolling(14).mean() / dw.rolling(14).mean())
+    indicators['macd'] = macd - macd_signal
+    indicators['lw_r'] = (hh - data['close']) / (hh - ll) * 100
+    indicators['a/d'] = (data['high'] - data['close'].shift()) / (data['high'] - data['low'])
+    indicators['cci'] = (tp - tp_ma) / (0.015 * tp.rolling(n).apply(lambda x: np.std(x)))
+
+    return indicators
+
+
+def rebalance(unbalanced_data):
+
+    # Separate majority and minority classes
+    data_minority = unbalanced_data[unbalanced_data.target==0]
+    data_majority = unbalanced_data[unbalanced_data.target==1]
+
+    # Upsample minority class
+    n_samples = len(data_majority)
+    data_minority_upsampled = resample(data_minority, replace=True, n_samples=n_samples, random_state=5)
+
+    # Combine majority class with upsampled minority class
+    data_upsampled = pd.concat([data_majority, data_minority_upsampled])
+
+    data_upsampled.sort_index(inplace=True)
+
+    # Display new class counts
+    data_upsampled.target.value_counts()
+
+    return data_upsampled
+
+
+
+
+
 def get_data_from_disc(symbol, skipFirstLines):
     """Read stock data (adjusted close) for given symbols from CSV files.
     https://finance.yahoo.com/quote/%5EGSPC/history?period1=-630986400&period2=1563138000&interval=1d&filter=history&frequency=1d
@@ -181,54 +304,129 @@ def get_data_from_disc(symbol, skipFirstLines):
     df1 = pd.read_csv(  symbol_to_path(symbol)
                           , index_col  = 'Date'
                           , parse_dates= True
-                          , usecols    = ['Date', 'Close', 'Open', 'High', 'Low']
+                          , usecols    = ['Date', 'Close', 'Open', 'High', 'Low', 'Adj Close']
                           , na_values  = ['nan'])
 
+    # Clean NaN values
+    df = utils.dropna(df1)
+
+    # Add ta features filling NaN values
+    #df1 = add_all_ta_features(df, "Open", "High", "Low", "Close",  fillna=True)#, "Volume_BTC",
+
+    # Add bollinger band high indicator filling NaN values
+    df1['bb_hi10' ] = bollinger_hband_indicator(df1["Close"], n=10 , ndev=2, fillna=True)
+    df1['bb_lo10' ] = bollinger_lband_indicator(df1["Close"], n=10 , ndev=2, fillna=True)
+    df1['bb_hi20' ] = bollinger_hband_indicator(df1["Close"], n=20 , ndev=2, fillna=True)
+    df1['bb_lo20' ] = bollinger_lband_indicator(df1["Close"], n=20 , ndev=2, fillna=True)
+    df1['bb_hi50' ] = bollinger_hband_indicator(df1["Close"], n=50 , ndev=2, fillna=True)
+    df1['bb_lo50' ] = bollinger_lband_indicator(df1["Close"], n=50 , ndev=2, fillna=True)
+    df1['bb_hi200'] = bollinger_hband_indicator(df1["Close"], n=200, ndev=2, fillna=True)
+    df1['bb_lo200'] = bollinger_lband_indicator(df1["Close"], n=200, ndev=2, fillna=True)
+
+    df1['rsi10' ]   = rsi                      (df1["Close"], n=10,          fillna=True)
+    df1['rsi20' ]   = rsi                      (df1["Close"], n=20,          fillna=True)
+    df1['rsi50' ]   = rsi                      (df1["Close"], n=50,          fillna=True)
+    df1['rsi200']   = rsi                      (df1["Close"], n=200,         fillna=True)
+
+    df1['stoc10' ]  = stoch                    (df1["High"],df1["Low"],df1["Close"], n=10, fillna=True)
+    df1['stoc20' ]  = stoch                    (df1["High"],df1["Low"],df1["Close"], n=20, fillna=True)
+    df1['stoc50' ]  = stoch                    (df1["High"],df1["Low"],df1["Close"], n=50, fillna=True)
+    df1['stoc200']  = stoch                    (df1["High"],df1["Low"],df1["Close"], n=200, fillna=True)
 
 
     df1['sma10' ] = df1['Close'].rolling(window=10).mean()
     df1['sma20' ] = df1['Close'].rolling(window=20).mean()
     df1['sma50' ] = df1['Close'].rolling(window=50).mean()
     df1['sma200'] = df1['Close'].rolling(window=200).mean()
+    df1['sma400'] = df1['Close'].rolling(window=400).mean()
+    #df1['mom']=pandas.stats.
     df1 = df1[-(df1.shape[0]-skipFirstLines):]  # skip 1st x rows, x years due to NAN in sma, range
 
-    print ('\ndf1=\n',df1.tail())
-    print ('\nsma_10=\n',df1['sma10'] )
-    print ('\nsma_20=\n',df1['sma20'] )
 
     df1['range'] = df1['Close']-df1['Open']
-    print ('\nrange=\n',df1['range'])
-    df1['range_sma'] = df1['sma10'] - df1['sma20']
+
+    #df/df.iloc[0,:]
+    df1['range_sma']  = (df1 ['Close'] - df1 ['sma10']) / df1['Close']
+    df1['range_sma1'] = (df1 ['sma10'] - df1 ['sma20']) / df1['sma10']
+    df1['range_sma2'] = (df1 ['sma20'] - df1 ['sma50']) / df1['sma20']
+    df1['range_sma3'] = (df1 ['sma50'] - df1['sma200']) / df1['sma50']
+    df1['range_sma4'] = (df1['sma200'] - df1['sma400']) / df1['sma200']
+
+    df1['rel_bol_hi10']  = (df1 ['High'] - df1 ['bb_hi10']) / df1['High']
+    df1['rel_bol_lo10']  = (df1 ['Low']  - df1 ['bb_lo10']) / df1['Low']
+    df1['rel_bol_hi20']  = (df1 ['High'] - df1 ['bb_hi20']) / df1['High']
+    df1['rel_bol_lo20']  = (df1 ['Low']  - df1 ['bb_lo20']) / df1['Low']
+    df1['rel_bol_hi50']  = (df1 ['High'] - df1 ['bb_hi50']) / df1['High']
+    df1['rel_bol_lo50']  = (df1 ['Low']  - df1 ['bb_lo50']) / df1['Low']
+    df1['rel_bol_hi200'] = (df1 ['High'] - df1 ['bb_hi200']) / df1['High']
+    df1['rel_bol_lo200'] = (df1 ['Low']  - df1 ['bb_lo200']) / df1['Low']
+
     #df1['isUp'] = 0
     print(df1)
-    #df1['isUp']  = np.random.randint(2, size=df1.shape[0])
-    # if df1['range'] > 0.0:
-    #     df1['isUp'] = 1
-    # else:
-    #     df1['isUp'] = 0
+    # print ('\ndf1=\n',df1.tail())
+    # print ('\nsma_10=\n',df1['sma10'] )
+    # print ('\nsma_200=\n',df1['sma200'] )
+    # print ('\nrsi10=\n',df1['rsi10'] )
+    # print ('\nrsi200=\n',df1['rsi200'] )
+    # print ('\nstoc10=\n',df1['stoc10'] )
+    # print ('\nstoc200=\n',df1['stoc200'] )
+    # print ('\nrangesma=\n',df1['rangesma'])
+    # print ('\nrangesma4=\n',df1['rangesma4'])
+    # print ('\nrel_bol_hi10=\n',df1['rel_bol_hi10'])
+    # print ('\nrel_bol_hi200=\n',df1['rel_bol_hi200'])
+
+    # df1['sma4002' ] = sma
+    # df1['ema' ] = ema
+    # df1['macd' ] = macd
+    # df1['stoc' ] = stoc
+    # df1['rsi' ] = rsi
+#tech_ind = pd.concat([sma, ema, macd, stoc, rsi, adx, cci, aroon, bands, ad, obv, wma, mom, willr], axis=1)
+
+    ## labeling
+    ## smart labeling
     df1.loc[df1.range >  0.0, 'isUp'] = 1
     df1.loc[df1.range <= 0.0, 'isUp'] = 0
+    #df1['isUp']  = np.random.randint(2, size=df1.shape[0])# if u the model accuracy with random labaling expect to get 0.5
 
-#direction = (close > close.shift()).astype(int)
+
+    #direction = (close > close.shift()).astype(int)
     #target = direction.shift(-1).fillna(0).astype(int)
     #target.name = 'target'
     #sma10 = sma10.rename(columns={symbol: symbol+'sma10'})
     #sma20 = sma20.rename(columns={symbol: symbol+'sma20'})
     #df1 = df1.rename(columns={'Close': symbol+'Close'})
+# loss: 0.1222 - acc: 0.9000 - val_loss: 0.1211 - val_acc: 0.9364 epoch50  sma+range+close+open (range tell model the answer)
+# loss: 0.6932 - acc: 0.4860 - val_loss: 0.6932 - val_acc: 0.4969 random data
+# loss: 0.6922 - acc: 0.5205 - val_loss: 0.6911 - val_acc: 0.5364 epoch50  sma
+# loss: 0.6923 - acc: 0.5198 - val_loss: 0.6914 - val_acc: 0.5360
+# loss: 0.6922 - acc: 0.5217 - val_loss: 0.6911 - val_acc: 0.5353
+# loss: 0.6431 - acc: 0.5846 - val_loss: 0.7373 - val_acc: 0.5364
+# loss: 0.5373 - acc: 0.7114 - val_loss: 0.6112 - val_acc: 0.6773            epoch50
+# loss: 0.5198 - acc: 0.7225 - val_loss: 0.5632 - val_acc: 0.6797            epoch100 sma+stoc+rsi
+# loss: 0.5487 - acc: 0.7079 - val_loss: 0.6115 - val_acc: 0.6740    SPY 1970 epoch100 sma+stoc+rsi+bol 1970
+# loss: 0.6047 - acc: 0.6574 - val_loss: 0.6257 - val_acc: 0.6580    SPY 2000
+# loss:    nan - acc: 0.4711 - val_loss:    nan - val_acc: 0.4563    DJI 2000
+# loss:    nan - acc: 0.4906 - val_loss:    nan - val_acc: 0.4626    QQQ 2000
 
     print('columns=', df1.columns)
-    print ('\ndf1=\n',df1.loc[:, ['Open','High', 'Low', 'Close', 'range', 'isUp']])
-    print ('\ndf1=\n',df1.loc[:, ['sma10','sma20','sma50','sma200','range_sma']])
+    print ('\ndf1=\n',df1.loc[:, ['Open' ,'High' , 'Low' , 'Close', 'range_sma', 'isUp']])
+    print ('\ndf1=\n',df1.loc[:, ['sma10','sma20','sma50','sma200', 'range_sma1']])
+    print ('\ndf1=\n',df1.loc[:, ['rsi10','rsi20','rsi50','rsi200']])
+    print ('\ndf1=\n',df1.loc[:, ['stoc10','stoc20','stoc50','stoc200']])
+    print ('\ndf1=\n',df1.loc[:, ['bb_hi10','bb_hi20','bb_hi50','bb_hi200']])#, 'sma4002']])
+    print ('\ndf1=\n',df1.loc[:, ['bb_lo10','bb_lo20','bb_lo50','bb_lo200']])#, 'sma4002']])
+    print ('\ndf1=\n',df1.loc[:, ['rel_bol_hi10','rel_bol_hi20','rel_bol_hi50','rel_bol_hi200']])#, 'sma4002']])
+    # print ('\ndf1=\n',df1.loc[:, ['ema','macd','stoc', 'rsi']])
     return df1
 
 
-def get_data_from_web(symbol):
-    start, end = '1970-01-03','2019-07-12'#'2007-05-02', '2016-04-11'
-    data   = web.DataReader(symbol, 'yahoo', start, end)
-    data   = pd.DataFrame(data)
-    prices = data['Adj Close']
-    prices = prices.astype(float)
-    return prices
+# def get_data_from_web(symbol):
+#     start, end = '1970-01-03','2019-07-12'#'2007-05-02', '2016-04-11'
+#     data   = web.DataReader(symbol, 'yahoo', start, end)
+#     data   = pd.DataFrame(data)
+#     prices = data['Adj Close']
+#     prices = prices.astype(float)
+#     return prices
 
 def get_data_from_web2(symbol):
     start, end = '1970-01-03','2019-07-12'#'2007-05-02', '2016-04-11'
@@ -260,11 +458,12 @@ def kpi_sharpeRatio():
 
 
 def plot_histogram(x, bins, title, xlabel, ylabel):
+    plt.clf()
     plt.hist(x, bins=bins)
     plt.title(title)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
-    plt.show()
+    plt.savefig('plots/model/'+title+'.png')
 
 
 def plot_confusion_matrix(cm,

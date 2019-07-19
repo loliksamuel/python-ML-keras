@@ -15,8 +15,9 @@ bug tracker
 -----------------------------
 priority | name
 -----------------------------
-1        | rubi, how accuracy so high??
-2        | rubi, which normalize function to use?
+1        | rubi, how accuracy so high?? 64%!
+2        | should use PURGED K-FOLD Cross Validation or  TimeSeriesSplit instead of standart split
+3        | rubi, which normalize function to use?
 '''
 
 from __future__ import absolute_import, division, print_function, unicode_literals
@@ -25,7 +26,7 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 from examples.trading.utils import *
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, TimeSeriesSplit
 
 import keras
 from keras.layers import Dense, Dropout
@@ -38,15 +39,16 @@ import matplotlib.pyplot as plt
 # https://www.youtube.com/watch?v=aircAruvnKk
 
 batch_size  = 128# we cannot pass the entire data into network at once , so we divide it to batches . number of samples that we will pass through the network at 1 time and use for each epoch. default is 32
-epochs      = 50 #  iterations. on each, train all data, then evaluate, then adjust parameters (weights and biases)
+epochs      = 100# 50  #  iterations. on each, train all data, then evaluate, then adjust parameters (weights and biases)
 #iterations  = 60000/128
 size_input   = 10#x_train.shape[1] # no of features
 size_hidden  = 512 # If a model has more hidden units (a higher-dimensional representation space), and/or more layers, then the network can learn more complex representations. However, it makes the network more computationally expensive and may lead to overfit
 size_output  = 2 # there are 3 classes (buy.sell. hold) or (green,red,hold)
 name_output  = ['Green bar', 'Red Bar']# 'no direction Bar'
 #iterations  = 60000/128
-symbol       = '^GSPC' #SP500 (3600) DJI(300) GOOG XLF XLV QQQ
-
+symbol       = '^GSPC' #^GSPC=SP500 (3600->1970 or 12500 =2000) DJI(300, 1988)  QQQ(300, 2000) GOOG XLF XLV
+skipDays     = 3600#12500 total 13894 daily bars
+percentTestSplit = 0.33#33% from data will go to test
 
 print('\nLoading  data')
 print('\n======================================')
@@ -66,28 +68,34 @@ print('\n======================================')
 #
 
 # Get stock data
-df_all = get_data_from_disc(symbol, 3600)
+df_all = get_data_from_disc(symbol, skipDays)
 print(df_all.tail())
 
 # Slice and plot
 #plot_selected(df_all, [  'Close', 'sma200'], shouldNormalize=True, symbol=symbol)
 
 # Slice and plot
-plot_selected(df_all, [ 'Close',  'sma200'],  shouldNormalize=False, symbol=symbol)
+plot_selected(df_all,           title='TA-price of '+symbol+' vs time'              , columns=[ 'Close',  'sma200'],  shouldNormalize=False, symbol=symbol)
+
+plot_selected(df_all.tail(500), title='TA-sma 1,10,20,50,200 of '+symbol+' vs time' , columns=[  'Close', 'sma10', 'sma20', 'sma50',  'sma200',  'sma400', 'bb_hi10', 'bb_lo10', 'bb_hi20', 'bb_lo20', 'bb_hi50',  'bb_lo200', 'bb_lo50', 'bb_hi200'],  shouldNormalize=False, symbol=symbol)
+
+plot_selected(df_all.tail(500), title='TA-range sma,bband of '+symbol+' vs time'    , columns=[  'range_sma', 'range_sma1', 'range_sma2', 'range_sma3',  'range_sma4', 'rel_bol_hi10',  'rel_bol_hi20', 'rel_bol_hi200', 'rel_bol_hi50'],  shouldNormalize=False, symbol=symbol)
+plot_selected(df_all.tail(500), title='TA-rsi,stoc of '+symbol+' vs time'           , columns=[  'rsi10', 'rsi20', 'rsi50', 'rsi200', 'stoc10', 'stoc20', 'stoc50', 'stoc200'],  shouldNormalize=False, symbol=symbol)
+
 #plot_selected(df, ['Date','Close']                                    , start_date, end_date, shouldNormalize=False)
 elements = df_all.size
 shape=df_all.shape
 
 
-
 print('\nsplit to train & test data')
 print('\n======================================')
-#df_data = df_all.loc[:,   [ 'Open', 'High', 'Low', 'Close', 'sma10', 'sma20', 'sma50',  'sma200', 'range', 'range_sma']]
-df_data = df_all.loc[:,   [ 'sma10', 'sma20', 'sma50',  'sma200',  'range_sma']]
+#df_data = df_all.loc[:,   [ 'Open', 'High', 'Low', 'Close', 'range', 'sma10', 'sma20', 'sma50',  'sma200',  'range_sma']]close
+df_data = df_all.loc[:,                                             [ 'sma10', 'sma20', 'sma50',  'sma200',  'sma400', 'range_sma', 'range_sma1', 'range_sma2', 'range_sma3',  'range_sma4', 'bb_hi10', 'bb_lo10', 'bb_hi20', 'bb_lo20', 'bb_hi50', 'bb_lo50', 'bb_hi200', 'bb_lo200', 'rel_bol_hi10', 'rel_bol_lo10', 'rel_bol_hi20', 'rel_bol_lo20', 'rel_bol_hi50', 'rel_bol_lo50', 'rel_bol_hi200', 'rel_bol_lo200', 'rsi10', 'rsi20', 'rsi50', 'rsi200', 'stoc10', 'stoc20', 'stoc50', 'stoc200']]
+print('columns=', df_data.columns)
 print('\ndata describe=\n',df_data.describe())
 print('shape=',str(shape), " elements="+str(elements), ' rows=',str(shape[0]))
-(x_train, x_test)  = train_test_split(df_data.values, test_size=0.33, shuffle=False)
-
+(x_train, x_test)  = train_test_split(df_data.values, test_size=percentTestSplit, shuffle=False)#shuffle=False in timeseries
+# tscv = TimeSeriesSplit(n_splits=5)
 print('\ntrain data', x_train.shape)
 print(x_train[0])
 print(x_train[1])
@@ -107,7 +115,30 @@ df_y = df_all['isUp']#np.random.randint(0,2,size=(shape[0], ))
 #df_y = pd.DataFrame()#, columns=list('is_up'))
 #df_y['isUp'] = y
 print(df_y)
-(y_train, y_test)  = train_test_split(df_y.values, test_size=0.33, shuffle=False)
+(y_train, y_test)  = train_test_split(df_y.values, test_size=percentTestSplit, shuffle=False)
+#
+# X = np.array([[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12]])
+# y = np.array([100, 200, 300, 400, 500, 600])
+# tscv = TimeSeriesSplit(n_splits=5)
+# print(tscv)  # doctest: +NORMALIZE_WHITESPACE
+# TimeSeriesSplit(max_train_size=None, n_splits=5)
+# for train_index, test_index in tscv.split(X):
+#      print("TRAIN:", train_index, "TEST:", test_index)
+#      X_train, X_test = X[train_index], X[test_index]
+#      y_train, y_test = y[train_index], y[test_index]
+#      print(X_train,' , ', X_test)
+#      print(X_train,' , ', y_train)
+#      print(len(X_train),' , ', len(X_test))
+#exit(0)
+'''
+TRAIN: [0] TEST: [1]
+TRAIN: [0 1] TEST: [2]
+TRAIN: [0 1 2] TEST: [3]
+TRAIN: [0 1 2 3] TEST: [4]
+TRAIN: [0 1 2 3 4] TEST: [5]
+'''
+
+
 print(df_y.tail())
 print('\nlabel describe\n',df_y.describe())
 #(x_train, y_train)  = train_test_split(df.as_matrix(), test_size=0.33, shuffle=False)
@@ -145,7 +176,7 @@ print('\n======================================')
 #dataset.isna().sum()
 #dataset = dataset.dropna()
 
-print('\nNormalize   to    0-1 (float)')# very strange results if we dont
+print('\nNormalize   to    0.0-1.0 ')# very strange results if we dont
 x_train = tf.keras.utils.normalize(x_train, axis=1)
 x_test  = tf.keras.utils.normalize(x_test , axis=1)
 #print('columns=', x_train.columns)
@@ -224,9 +255,8 @@ plot_stat_accuracy_vs_time (history_dict)
 hist = pd.DataFrame(history.history)
 hist['epoch'] = history.epoch
 print(hist.tail())
-plot_stat_train_vs_test(history)
-plot_stat_loss_vs_accuracy(history_dict)
 
+plot_stat_loss_vs_accuracy(history_dict)
 score = model.evaluate(x_test, y_test, verbose=0)                                     # random                                |  calc label
 print('Test loss:    ', score[0], ' (is it close to 0?)')                            #Test,train loss     : 0.6938 , 0.6933   |  0.47  0.5
 print('Test accuracy:', score[1], ' (is it close to 1 and close to train accuracy?)')#Test,train accuracy : 0.5000 , 0.5000   |  0.69, 0.74
@@ -240,11 +270,17 @@ Y_test = np.argmax(y_test, axis=1)
 #print('prediction list= ' , y_pred.tolist())
 #print('labelized  list= ' , Y_test.tolist())
 
+x_all = np.concatenate((x_train, x_test), axis=0)
+Y_pred = model.predict(x_all)
+print('labeled   as ', y_test[0], ' highest confidence for ' , np.argmax(y_test[0]))
+print('predicted as ' ,Y_pred[0], ' highest confidence for ' , np.argmax(Y_pred[0]))
+y_pred = np.argmax(Y_pred, axis=1)
+Y_test = np.argmax(y_test, axis=1)
 
 
 filename='mlpt_'+symbol+'_'+str(epochs)+'_'+str(size_hidden)+'.model'
 print('\nSave model as ',filename)
-model.save(filename)# 5.4 mb
+model.save('models/'+filename)# 5.4 mb
 
 
 
@@ -255,17 +291,16 @@ bins = np.linspace(np.math.ceil(min(data)),    np.math.floor(max(data)),    100)
 
 plot_histogram(  x = data
                   , bins=100
-                  , title = 'range of a bar - Gaussian data (fixed number of bins)'
+                  , title = 'diff bw open and close - Gaussian data '
                   , xlabel ='range of a bar from open to close'
                   , ylabel ='count')
 
 
 plot_histogram(    x = df_all['range_sma']
                     , bins=100
-                    , title = 'diff bw 2 sma - Gaussian data (fixed number of bins)'
+                    , title = 'diff bw 2 sma - Gaussian data'
                     , xlabel ='diff bw 2 sma 10,20  '
                     , ylabel ='count')
-
 
 
 
