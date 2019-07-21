@@ -82,7 +82,7 @@ def plot_barchart(list, title="BT", ylabel="Price", xlabel="Date"):
     x = range(l)
     myarray = np.asarray(list)
     colors = 'green'#np.array([(1,0,0)]*l)
-    colors[myarray > 0.0] = (0,0,1)
+    #colors[myarray > 0.0] = (0,0,1)
     plt.bar(x,myarray, color=colors)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
@@ -543,6 +543,37 @@ def plot_confusion_matrix(cm,
     plt.ylabel('True label')
     plt.xlabel('Predicted label\naccuracy={:0.4f}; misclass={:0.4f}'.format(accuracy, misclass))
     plt.show()
+
+import matplotlib.pylab as pl
+
+def plot_barchart2(y, title="BT_pred vs observed", ylabel="Price", xlabel="Date"):
+    l = len(y)
+    greater_than_zero = y == True
+    lesser_than_zero  = y == False
+
+    pl.clf()
+    cax = pl.subplot(111)
+    cax.bar(np.arange(l)[greater_than_zero], y[greater_than_zero], color='blue')
+    cax.bar(np.arange(l)[lesser_than_zero ], y[lesser_than_zero ], color='red')
+    pl.title(title+"TP+TN="+str(sum(y))+'#, ' +str(round(sum(y)/l*100,2))+"%")
+    pl.savefig('plots/model/'+title+'.png')
+    #pl.show()
+
+
+
+
+y_pred  = [0,0,0,1,1,1,0,0,1,0,1,0,0,1,0,0,0,1,1,1,0,0,1,0,1,0,0,1,0,0,0,1,1,1,0,0,1,0,1,0,0,1]
+Y_test  = [0,0,1,1,1,0,0,1,0,1,0,0,1,0,0,0,1,1,1,0,0,1,0,1,0,0,1,0,0,0,1,1,1,0,0,1,0,1,0,0,1,1]
+print (type(y_pred))
+print (type(Y_test))
+y1=np.array(y_pred)
+y2=np.array(Y_test)
+print (type(y_pred))
+print (type(Y_test))
+yb = np.array(y_pred) == np.array(Y_test)
+print(yb)
+print (type(yb))
+plot_barchart2  (yb,  title="BT_pred vs observed", ylabel="x", xlabel="result")
 
 
 
