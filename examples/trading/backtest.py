@@ -59,7 +59,8 @@ def back_test(filename, symbol, skipRows, start_date, end_date):
     lose_shrt  = 0
     pointUsdRatio = 1
     initialDeposit = 10000
-    profitCurr   = 0
+    pointsCurr   = 0
+    listTradesPercent = []
     listTrades   =[]
     listLongs    =[]
     listShorts   =[]
@@ -85,11 +86,10 @@ def back_test(filename, symbol, skipRows, start_date, end_date):
     symbol= ^GSPC
     period= 13894  bars
     strategy= mlpt_^GSPC_100_512.model
-    initial  deposit : 10000
+    initial  deposit : 10,000
     Expected payoff  : (all/long/short/win/lose)   :  2.66  /  2.2  /  3.49  /  5.42  /  -3.82  points
-    absolute drawdown: 
-    
-    total net profit :  36984.91 $,  369.85%
+    absolute drawdown: 100$
+    total net profit :  36,984.91 $,  369.85%
       profits from longs  : 19660.32 $ ,  53.16 % of total
       profits from shorts : 17324.59 $ ,  46.84 % of total
     total positions    :  13893 # ,  70.17 % won 
@@ -97,7 +97,20 @@ def back_test(filename, symbol, skipRows, start_date, end_date):
       shorts positions : 4966 # ,  74.63 % won,  largest= 104.01 $, smallest= -80.36
       winner positions :  9749 # ,  70.17 % of total , 52815.58 $
       loser  positions :  4144 # ,  29.83 % of total , -15830.67 $
-
+    
+    summary
+    ==================
+    symbol= DJI
+    period= 8385  bars
+    strategy= mlpt_DJI_50_512.model
+    initial  deposit : 10000
+    Expected payoff  : (all/long/short/win/lose)   :  -2.85  /  0.0  /  -2.85  /  68.35  /  -65.02  points
+    absolute drawdown: -23,907
+    
+    total net profit :  -23,907 $,  -239.08%
+      profits from longs  : 0 $ ,  -0.0 % of total
+      profits from shorts : -23907.65 $ ,  100.0 % of total
+    total positions    :  8384 # ,  46.61 % won 
     '''
     for i in range(lenxx-1):#0 to 13894   #for index, row in df_oc.iterrows():
         currBar     = df_oc[(i+0):(i+1)]
@@ -123,42 +136,40 @@ def back_test(filename, symbol, skipRows, start_date, end_date):
         # print('predict=',prediction, ' isUp?', y_pred, ' range=',profit, ' y_pred=',y_pred)
         y_pred_curr = y_pred_all[(i+0):(i+1)]
         if  y_pred_curr == 1 :# green bar prediction
-            profitCurr = bar_range
+            pointsCurr  = bar_range
+            percentCurr = bar_range/open*100
             if  currBarUp == 1 :
-                listWinners.append(profitCurr)
+                listWinners.append(pointsCurr)
                 win_long    += 1
             else:
-                listLosers.append(profitCurr)
+                listLosers.append(pointsCurr)
                 lose_long   += 1
-            listLongs.append(profitCurr)
+            listLongs.append(pointsCurr)
 
-            print(' buy @' , str(round(open,2)), ' exit @',str(round(close,2)) , ' profit = ', profitCurr   )
+            print(' buy @', str(round(open,2)), ' exit @', str(round(close,2)), ' profit = ', pointsCurr)
         else:# red bar prediction
-            profitCurr = -bar_range
+            pointsCurr = -bar_range
             if  currBarUp == 1  :
-                listLosers.append(profitCurr)
+                listLosers.append(pointsCurr)
                 lose_shrt    += 1
             else:
-                listWinners.append(profitCurr)
+                listWinners.append(pointsCurr)
                 win_short    += 1
-            listShorts.append(profitCurr)
+            listShorts.append(pointsCurr)
 
-            print(' sell @' , str(round(open,2)), ' exit @',str(round(close,2)), ' profit = ', profitCurr   )
+            print(' sell @', str(round(open,2)), ' exit @', str(round(close,2)), ' profit = ', pointsCurr)
 
 
         #balanceTotal += profit
-        listTrades.append(profitCurr)
+        listTrades.append(pointsCurr)
+        listTradesPercent.append(percentCurr)
         #plot_live(np.cumsum(listTrades, dtype=float) , title="commulative profit over time", xlabel="trades",  ylabel="points")
 
         cumsum = np.cumsum(listTrades, dtype=float)
 
-        #live plot of profits (a little bit slow
-        plt.plot(  i,  cumsum[i], '.b' )# - is line , b is blue
-        plt.draw()
-        plt.pause(0.01)
+        #plot_live(cumsum, i)
 
-
-        print('longs=',str(len(listLongs)), ' short=',str(len(listShorts)), ' gain_all=',str(len(listWinners)) , ' loss_all=',str(len(listLosers)), ' profitCurr=', str(round(profitCurr,2)), ' profitTotal=', round(sum(listTrades),2), ' profitShorts=', round(sum(listShorts,2)), ' profitLongs=', round(sum(listLongs),2))
+        print('longs=', str(len(listLongs)), ' short=', str(len(listShorts)), ' gain_all=', str(len(listWinners)), ' loss_all=', str(len(listLosers)), ' profitCurr=', str(round(pointsCurr, 2)), ' profitTotal=', round(sum(listTrades), 2), ' profitShorts=', round(sum(listShorts, 2)), ' profitLongs=', round(sum(listLongs), 2))
 
     # If you want to see the full error list then print the following statement
     longs  = len(listLongs)
@@ -190,11 +201,16 @@ def back_test(filename, symbol, skipRows, start_date, end_date):
     print("  winner positions : ", len(listWinners), '# , ', round(len(listWinners)/totalTrades*100,2), '% of total, ' ,round(sum(listWinners),2),'$')
     print("  loser  positions : " ,len( listLosers), '# , ', round(len(listLosers) /totalTrades*100,2), '% of total, ' ,round(sum(listLosers ),2),'$')
     plt.clf()
-    plot_barchart(listTrades, title="BT-trade profit over time", xlabel="trades",  ylabel="points")
+    plot_barchart(listTrades       , title="BT-trade points  over time", xlabel="trades",  ylabel="points")
+    plt.clf()
+    plot_barchart(listTradesPercent, title="BT-trade percent over time", xlabel="trades",  ylabel="percent", colors='blue')
 
     listTrades.insert(1,initialDeposit)
     plt.clf()
-    plot_list(np.cumsum(listTrades, dtype=float) , title="BT-commulative profit over time", xlabel="trades",  ylabel="points")
+    plot_list(np.cumsum(listTrades, dtype=float)        , title="BT-commulative points over time", xlabel="trades",  ylabel="points")
+    plt.clf()
+    plot_list(np.cumsum(listTradesPercent, dtype=float) , title="BT-commulative percent over time", xlabel="trades",  ylabel="percent")
+
 
     plt.clf()
     title="BT-profit per year"
@@ -211,12 +227,13 @@ def back_test(filename, symbol, skipRows, start_date, end_date):
 
 
 
+
 print('\nBacktesting')
 print('\n=========================================')
 
-symbol='^GSPC'# ^GSPC = SP500
+symbol='^GSPC'# ^GSPC = SP500 3600, DJI 300
 skipRows = 3600#3600 6600
-epochs=100
+epochs=50
 size_hidden=512
 filename = 'mlpt_'+symbol+'_'+str(epochs)+'_'+str(size_hidden)+'.model'
 

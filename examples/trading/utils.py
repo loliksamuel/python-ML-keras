@@ -77,11 +77,11 @@ def plot_list(list, title="TA-normalized Stock prices", ylabel="Price", xlabel="
 
 
 
-def plot_barchart(list, title="BT", ylabel="Price", xlabel="Date"):
+def plot_barchart(list, title="BT", ylabel="Price", xlabel="Date", colors='green'):
     l = len(list)
     x = range(l)
     myarray = np.asarray(list)
-    colors = 'green'#np.array([(1,0,0)]*l)
+    colors = colors#'green'#np.array([(1,0,0)]*l)
     #colors[myarray > 0.0] = (0,0,1)
     plt.bar(x,myarray, color=colors)
     plt.xlabel(xlabel)
@@ -164,9 +164,11 @@ def plot_stat_accuracy_vs_time(history_dict, title='model accuracy over time') :
 
 
 
-def plot_live(y_profit, x_trade, title='title', xlabel='xlabel', ylabel='ylabel'):
-    x=1
-    # plt.clf()
+#live plot of profits (a little bit slow)
+def plot_live(cumsum, i):
+    plt.plot(i, cumsum[i], '.b')  # - is line , b is blue
+    plt.draw()
+    plt.pause(0.01)
 
 # normalize to first row
 def normalize(df):

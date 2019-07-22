@@ -114,7 +114,8 @@ df_y = df_all['isUp']  # np.random.randint(0,2,size=(shape[0], ))
 # df_y['isUp'] = y
 print(df_y)
 
-ts_cv = PurgedKFold(n_splits=5, gap_percentage=2.5)
+ts_cv = PurgedKFold    (n_splits=5, gap_percentage=2.5)
+#ts_cv = StratifiedKFold(n_splits=5, shuffle=False)
 
 # ts_cv = TimeSeriesSplit(n_splits=5)
 cv_scores = []
@@ -179,7 +180,7 @@ for train_index, test_index in ts_cv.split(df_data.values):
 
     # evaluate the model
     scores = model.evaluate(x_test, y_test, verbose=0)
-    print("%s: %.2f%%" % (model.metrics_names[1], scores[1] * 100))
+    print("----end of itteration: %s: %.2f%%" % (model.metrics_names[1], scores[1] * 100))
     cv_scores.append(scores[1] * 100)
 
-print("%.2f%% (+/- %.2f%%)" % (np.mean(cv_scores), np.std(cv_scores)))
+print("-------total accuracy : %.2f%% (+/- %.2f%%)" % (np.mean(cv_scores), np.std(cv_scores)))
