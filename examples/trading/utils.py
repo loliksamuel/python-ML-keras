@@ -412,8 +412,9 @@ def get_data_from_disc(symbol, skipFirstLines, size_output = 2):
     #sma10 = sma10.rename(columns={symbol: symbol+'sma10'})
     #sma20 = sma20.rename(columns={symbol: symbol+'sma20'})
     #df1 = df1.rename(columns={'Close': symbol+'Close'})
+        '''
 # loss: 0.1222 - acc: 0.9000 - val_loss: 0.1211 - val_acc: 0.9364 epoch50  sma+range+close+open (range tell model the answer)
-# loss: 0.6932 - acc: 0.4860 - val_loss: 0.6932 - val_acc: 0.4969 random data
+# loss: 0.6932 - acc: 0.4860 - val_loss: 0.6932 - val_acc: 0.4969 random data >>> random results
 # loss: 0.6922 - acc: 0.5205 - val_loss: 0.6911 - val_acc: 0.5364 epoch50  sma
 # loss: 0.6923 - acc: 0.5198 - val_loss: 0.6914 - val_acc: 0.5360
 # loss: 0.6922 - acc: 0.5217 - val_loss: 0.6911 - val_acc: 0.5353
@@ -421,19 +422,34 @@ def get_data_from_disc(symbol, skipFirstLines, size_output = 2):
 # loss: 0.5373 - acc: 0.7114 - val_loss: 0.6112 - val_acc: 0.6773            epoch50
 # loss: 0.5198 - acc: 0.7225 - val_loss: 0.5632 - val_acc: 0.6797            epoch100 sma+stoc+rsi
 # loss: 0.5487 - acc: 0.7079 - val_loss: 0.6115 - val_acc: 0.6740    SPY 1970 epoch100 sma+stoc+rsi+bol 1970
+# loss: 0.4112 - acc: 0.8140 - val_loss: 0.5576 - val_acc: 0.7324    SPY 1970 epoch500 nvo+mom+sma+stoc+rsi+bol 1970
+
 # loss: 0.6047 - acc: 0.6574 - val_loss: 0.6257 - val_acc: 0.6580    SPY 2000
 # loss:    nan - acc: 0.4711 - val_loss:    nan - val_acc: 0.4563    DJI 2000
 # loss:    nan - acc: 0.4906 - val_loss:    nan - val_acc: 0.4626    QQQ 2000
+
+                      nvo         Open         High          Low        Close  range_sma  isUp
+Date                                                                                         
+1964-05-01    748.525452    79.459999    80.470001    79.459999    80.169998   0.001821   1.0
+1964-05-04    669.824179    80.169998    81.010002    79.870003    80.470001   0.005580   1.0
+2019-07-11  10607.754714  2999.620117  3002.330078  2988.800049  2999.909912   0.008677   1.0
+2019-07-12   9973.829690  3003.360107  3013.919922  3001.870117  3013.770020   0.010287   1.0
+'''
     pd.set_option('display.max_columns', 500)
     pd.set_option('display.width'      , 1000)
     print('columns=', df1.columns)
-    print ('\ndf1=\n',df1.loc[:, ['Open' ,'High' , 'Low' , 'Close', 'range_sma',  'isUp']])
+    print ('\ndf1=\n',df1.loc[:, ['nvo', 'Open' ,'High' , 'Low' , 'Close', 'range_sma',  'isUp']])
     print ('\ndf1=\n',df1.loc[:, ['sma10','sma20','sma50','sma200', 'range_sma1']])
     print ('\ndf1=\n',df1.loc[:, ['rsi10','rsi20','rsi50','rsi5']])
     print ('\ndf1=\n',df1.loc[:, ['stoc10','stoc20','stoc50','stoc200']])
     print ('\ndf1=\n',df1.loc[:, ['bb_hi10','bb_hi20','bb_hi50','bb_hi200']])#, 'sma4002']])
     print ('\ndf1=\n',df1.loc[:, ['bb_lo10','bb_lo20','bb_lo50','bb_lo200']])#, 'sma4002']])
     print ('\ndf1=\n',df1.loc[:, ['rel_bol_hi10','rel_bol_hi20','rel_bol_hi50','rel_bol_hi200']])#, 'sma4002']])
+    print ('\ndf1[ 0]=\n',df1.iloc[0])#, 'sma4002']])
+    print ('\ndf1[ 1]=\n',df1.iloc[1])#, 'sma4002']])
+    print ('\ndf1[9308]=\n',df1.iloc[9308])#, 'sma4002']])
+    print ('\ndf1[-2]=\n',df1.iloc[-2])#, 'sma4002']])
+    print ('\ndf1[-1]=\n',df1.iloc[-1])#, 'sma4002']])
     #df = pd.DataFrame(record, columns = ['Name', 'Age', 'Stream', 'Percentage'])
     # rslt_df = df[df1['isUp'] == 1]
     # print ('\ndf1 describe direction = +1\n',rslt_df.describe())

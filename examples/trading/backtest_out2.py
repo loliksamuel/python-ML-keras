@@ -52,7 +52,7 @@ def back_test(filename, symbol, skipRows, names_input,names_output, start_date, 
     # data = pdr.get_data_yahoo(symbol, start_date, end_date)
     # closePrice = data["Close"]
     # print(closePrice)
-
+    start = 0 #use start=9308 to start from index where validation set start
     win_long   = 0
     win_short  = 0
     lose_long  = 0
@@ -113,7 +113,7 @@ def back_test(filename, symbol, skipRows, names_input,names_output, start_date, 
       profits from shorts : -23907.65 $ ,  100.0 % of total
     total positions    :  8384 # ,  46.61 % won 
     '''
-    for i in range(lenxx-1):#0 to 13894   #for index, row in df_oc.iterrows():
+    for i in range(start,lenxx-1):#0 to 13894   #for index, row in df_oc.iterrows():
         currBar      = df_oc[(i+0):(i+1)]
         #nextBar     = df_oc[(i+1):(i+2)]
         currBarIsUp  = df_y_observed[(i+0):(i+1)]
@@ -237,7 +237,7 @@ pd.set_option('display.width'      , 1000)
 
 symbol      ='^GSPC'# ^GSPC = SP500 3600, DJI 300
 skipRows    = 3600#3600 6600
-epochs      = 500
+epochs      = 600
 size_hidden = 512
 names_input   = ['nvo', 'mom5', 'mom10', 'mom20', 'mom50', 'sma10', 'sma20', 'sma50', 'sma200', 'sma400', 'range_sma', 'range_sma1', 'range_sma2', 'range_sma3', 'range_sma4', 'bb_hi10', 'bb_lo10', 'bb_hi20', 'bb_lo20', 'bb_hi50', 'bb_lo50', 'bb_hi200', 'bb_lo200', 'rel_bol_hi10', 'rel_bol_lo10', 'rel_bol_hi20', 'rel_bol_lo20', 'rel_bol_hi50', 'rel_bol_lo50', 'rel_bol_hi200', 'rel_bol_lo200', 'rsi10', 'rsi20', 'rsi50', 'rsi5', 'stoc10', 'stoc20', 'stoc50', 'stoc200']
 names_output  = ['Green bar', 'Red Bar']#, 'Hold Bar']#Green bar', 'Red Bar', 'Hold Bar'
