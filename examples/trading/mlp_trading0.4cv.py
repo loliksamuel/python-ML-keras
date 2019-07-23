@@ -1,15 +1,4 @@
-'''Trains a simple deep NN MLP (Multilayer perceptron) on the SP500
-
-Gets to 90.40% test accuracy after 20 epochs
-(there is *a lot* of margin for parameter tuning).
-1 seconds per epoch on a K520 GPU.
-
-3 Techniques to Prevent Overfitting
-1. Early Stopping: In this method, we track the loss on the validation set during the training phase and use it to determine when to stop training such that the model is accurate but not overfitting.
-2. Image Augmentation: Artificially boosting the number of images in our training set by applying random image transformations to the existing images in the training set.
-3. neoron Dropout: Removing a random selection of a fixed number of neurons in a neural network during training. model.add(Dropout(0.2, input_shape=(60,)))
-4. L1, L2 Regularization:https://classroom.udacity.com/courses/ud188/lessons/b4ca7aaa-b346-43b1-ae7d-20d27b2eab65/concepts/75935645-a408-4685-bd9c-5f234e1b0761
-
+'''Cross validation
 
 bug tracker
 -----------------------------

@@ -65,7 +65,7 @@ def plot_data(df, title="normalized Stock prices", ylabel="Price", xlabel="Date"
     ax = df.plot(title=title, fontsize=12)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
-    plt.savefig('plots/model/'+title+'.png')
+    plt.savefig('files/output/'+title+'.png')
 
 def plot_list(list, title="TA-normalized Stock prices", ylabel="Price", xlabel="Date", dosave=1):
     plt.plot(list)
@@ -73,7 +73,7 @@ def plot_list(list, title="TA-normalized Stock prices", ylabel="Price", xlabel="
     plt.ylabel(ylabel)
     plt.title(title)
     if dosave == 1:
-        plt.savefig('plots/bt/'+title+'.png')
+        plt.savefig('files/output/'+title+'.png')
 
 
 
@@ -87,7 +87,7 @@ def plot_barchart(list, title="BT", ylabel="Price", xlabel="Date", colors='green
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.title(title)
-    plt.savefig('plots/bt/'+title+'.png')
+    plt.savefig('files/output/'+title+'.png')
 
 def plot_image(df, title):
     plt.figure()
@@ -124,7 +124,7 @@ def plot_stat_loss_vs_accuracy(history_dict, title='model Loss, accuracy over ti
     plt.xlabel('Epochs')
     plt.ylabel('Loss & accuracy')
     plt.legend()
-    plt.savefig('plots/model/'+title+'.png')
+    plt.savefig('files/output/'+title+'.png')
 
 def plot_stat_loss_vs_time(history_dict, title='model loss over time') :
     acc_train  = history_dict['acc']
@@ -141,7 +141,7 @@ def plot_stat_loss_vs_time(history_dict, title='model loss over time') :
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
     plt.legend()
-    plt.savefig('plots/model/'+title+'.png')
+    plt.savefig('files/output/'+title+'.png')
 
 
 
@@ -160,7 +160,7 @@ def plot_stat_accuracy_vs_time(history_dict, title='model accuracy over time') :
     plt.xlabel('Epochs')
     plt.ylabel('Accuracy')
     plt.legend()
-    plt.savefig('plots/model/'+title+'.png')
+    plt.savefig('files/output/'+title+'.png')
 
 
 
@@ -187,8 +187,9 @@ def normalize3(x):
     return x_norm
 
 
-def symbol_to_path(symbol, base_dir=""):
+def symbol_to_path(symbol, base_dir="files/input"):
     """Return CSV file path given ticker symbol."""
+    print ('base_dir=',base_dir)
     return os.path.join(base_dir, "{}.csv".format(str(symbol)))
 
 
@@ -298,7 +299,7 @@ def rebalance(unbalanced_data):
 
 
 
-def get_data_from_disc(symbol, skipFirstLines):
+def get_data_from_disc(symbol, skipFirstLines, size_output = 2):
     """Read stock data (adjusted close) for given symbols from CSV files.
     https://finance.yahoo.com/quote/%5EGSPC/history?period1=-630986400&period2=1563138000&interval=1d&filter=history&frequency=1d
     """
@@ -306,7 +307,7 @@ def get_data_from_disc(symbol, skipFirstLines):
     df1 = pd.read_csv(  symbol_to_path(symbol)
                           , index_col  = 'Date'
                           , parse_dates= True
-                          , usecols    = ['Date', 'Close', 'Open', 'High', 'Low', 'Adj Close']
+                          , usecols    = ['Date', 'Close', 'Open', 'High', 'Low', 'Adj Close', 'Volume']
                           , na_values  = ['nan'])
 
     # Clean NaN values
@@ -325,34 +326,42 @@ def get_data_from_disc(symbol, skipFirstLines):
     df1['bb_hi200'] = bollinger_hband_indicator(df1["Close"], n=200, ndev=2, fillna=True)
     df1['bb_lo200'] = bollinger_lband_indicator(df1["Close"], n=200, ndev=2, fillna=True)
 
+    df1['rsi5'  ]   = rsi                      (df1["Close"], n=5 ,          fillna=True)
     df1['rsi10' ]   = rsi                      (df1["Close"], n=10,          fillna=True)
     df1['rsi20' ]   = rsi                      (df1["Close"], n=20,          fillna=True)
     df1['rsi50' ]   = rsi                      (df1["Close"], n=50,          fillna=True)
-    df1['rsi200']   = rsi                      (df1["Close"], n=200,         fillna=True)
 
-    df1['stoc10' ]  = stoch                    (df1["High"],df1["Low"],df1["Close"], n=10, fillna=True)
-    df1['stoc20' ]  = stoch                    (df1["High"],df1["Low"],df1["Close"], n=20, fillna=True)
-    df1['stoc50' ]  = stoch                    (df1["High"],df1["Low"],df1["Close"], n=50, fillna=True)
+
+    df1['stoc10' ]  = stoch                    (df1["High"],df1["Low"],df1["Close"], n=10 , fillna=True)
+    df1['stoc20' ]  = stoch                    (df1["High"],df1["Low"],df1["Close"], n=20 , fillna=True)
+    df1['stoc50' ]  = stoch                    (df1["High"],df1["Low"],df1["Close"], n=50 , fillna=True)
     df1['stoc200']  = stoch                    (df1["High"],df1["Low"],df1["Close"], n=200, fillna=True)
 
+    df1['mom5'  ]  = wr                       (df1["High"],df1["Low"],df1["Close"], lbp=5  , fillna=True)
+    df1['mom10' ]  = wr                       (df1["High"],df1["Low"],df1["Close"], lbp=10 , fillna=True)
+    df1['mom20' ]  = wr                       (df1["High"],df1["Low"],df1["Close"], lbp=20 , fillna=True)
+    df1['mom50' ]  = wr                       (df1["High"],df1["Low"],df1["Close"], lbp=50 , fillna=True)
 
-    df1['sma10' ] = df1['Close'].rolling(window=10).mean()
-    df1['sma20' ] = df1['Close'].rolling(window=20).mean()
-    df1['sma50' ] = df1['Close'].rolling(window=50).mean()
+    df1['sma10' ] = df1['Close'].rolling(window=10 ).mean()
+    df1['sma20' ] = df1['Close'].rolling(window=20 ).mean()
+    df1['sma50' ] = df1['Close'].rolling(window=50 ).mean()
     df1['sma200'] = df1['Close'].rolling(window=200).mean()
     df1['sma400'] = df1['Close'].rolling(window=400).mean()
     #df1['mom']=pandas.stats.
     df1 = df1[-(df1.shape[0]-skipFirstLines):]  # skip 1st x rows, x years due to NAN in sma, range
 
+    df1['nvo'  ]      = df1['Volume'] /  df1['sma10'] / 100 # normalized volume
 
-    df1['range'] = df1['Close']-df1['Open']
+
+    df1['range']      = df1['Close'] - df1['Open']
+    df1['percentage'] = df1['range'] / df1['Open'] * 100
 
     #df/df.iloc[0,:]
     df1['range_sma']  = (df1 ['Close'] - df1 ['sma10']) / df1['Close']
-    df1['range_sma1'] = (df1 ['sma10'] - df1 ['sma20']) / df1['sma10']
-    df1['range_sma2'] = (df1 ['sma20'] - df1 ['sma50']) / df1['sma20']
-    df1['range_sma3'] = (df1 ['sma50'] - df1['sma200']) / df1['sma50']
-    df1['range_sma4'] = (df1['sma200'] - df1['sma400']) / df1['sma200']
+    df1['range_sma1'] = (df1 ['sma10'] - df1 ['sma20']) / df1['sma10']#small sma above big sma indicates that price is going up
+    df1['range_sma2'] = (df1 ['sma20'] - df1 ['sma50']) / df1['sma20']#small sma above big sma indicates that price is going up
+    df1['range_sma3'] = (df1 ['sma50'] - df1['sma200']) / df1['sma50']#small sma above big sma indicates that price is going up
+    df1['range_sma4'] = (df1['sma200'] - df1['sma400']) / df1['sma200']#small sma above big sma indicates that price is going up
 
     df1['rel_bol_hi10']  = (df1 ['High'] - df1 ['bb_hi10']) / df1['High']
     df1['rel_bol_lo10']  = (df1 ['Low']  - df1 ['bb_lo10']) / df1['Low']
@@ -369,7 +378,7 @@ def get_data_from_disc(symbol, skipFirstLines):
     # print ('\nsma_10=\n',df1['sma10'] )
     # print ('\nsma_200=\n',df1['sma200'] )
     # print ('\nrsi10=\n',df1['rsi10'] )
-    # print ('\nrsi200=\n',df1['rsi200'] )
+    # print ('\nrsi5=\n',df1['rsi5'] )
     # print ('\nstoc10=\n',df1['stoc10'] )
     # print ('\nstoc200=\n',df1['stoc200'] )
     # print ('\nrangesma=\n',df1['rangesma'])
@@ -386,8 +395,14 @@ def get_data_from_disc(symbol, skipFirstLines):
 
     ## labeling
     ## smart labeling
-    df1.loc[df1.range >  0.0, 'isUp'] = 1
-    df1.loc[df1.range <= 0.0, 'isUp'] = 0
+    if size_output == 2:
+        df1.loc[df1.range >  0.0, 'isUp'] = 1
+        df1.loc[df1.range <= 0.0, 'isUp'] = 0
+    if size_output == 3:
+        df1['isUp'] = 0
+        df1.loc[        df1.percentage >= +0.1 , 'isUp'] =  1
+        df1.loc[        df1.percentage <= -0.1 , 'isUp'] = -1
+        # df1.loc[(-0.1 < df1.percentage <  +0.1), 'isUp'] =  0
     #df1['isUp']  = np.random.randint(2, size=df1.shape[0])# if u the model accuracy with random labaling expect to get 0.5
 
 
@@ -409,16 +424,25 @@ def get_data_from_disc(symbol, skipFirstLines):
 # loss: 0.6047 - acc: 0.6574 - val_loss: 0.6257 - val_acc: 0.6580    SPY 2000
 # loss:    nan - acc: 0.4711 - val_loss:    nan - val_acc: 0.4563    DJI 2000
 # loss:    nan - acc: 0.4906 - val_loss:    nan - val_acc: 0.4626    QQQ 2000
-
+    pd.set_option('display.max_columns', 500)
+    pd.set_option('display.width'      , 1000)
     print('columns=', df1.columns)
-    print ('\ndf1=\n',df1.loc[:, ['Open' ,'High' , 'Low' , 'Close', 'range_sma', 'isUp']])
+    print ('\ndf1=\n',df1.loc[:, ['Open' ,'High' , 'Low' , 'Close', 'range_sma',  'isUp']])
     print ('\ndf1=\n',df1.loc[:, ['sma10','sma20','sma50','sma200', 'range_sma1']])
-    print ('\ndf1=\n',df1.loc[:, ['rsi10','rsi20','rsi50','rsi200']])
+    print ('\ndf1=\n',df1.loc[:, ['rsi10','rsi20','rsi50','rsi5']])
     print ('\ndf1=\n',df1.loc[:, ['stoc10','stoc20','stoc50','stoc200']])
     print ('\ndf1=\n',df1.loc[:, ['bb_hi10','bb_hi20','bb_hi50','bb_hi200']])#, 'sma4002']])
     print ('\ndf1=\n',df1.loc[:, ['bb_lo10','bb_lo20','bb_lo50','bb_lo200']])#, 'sma4002']])
     print ('\ndf1=\n',df1.loc[:, ['rel_bol_hi10','rel_bol_hi20','rel_bol_hi50','rel_bol_hi200']])#, 'sma4002']])
-    # print ('\ndf1=\n',df1.loc[:, ['ema','macd','stoc', 'rsi']])
+    #df = pd.DataFrame(record, columns = ['Name', 'Age', 'Stream', 'Percentage'])
+    # rslt_df = df[df1['isUp'] == 1]
+    # print ('\ndf1 describe direction = +1\n',rslt_df.describe())
+    # rslt_df = df[df1['isUp'] == -1]
+    # print ('\ndf1 describe direction = -1\n',rslt_df.describe())
+    # rslt_df = df[df1['isUp'] == 0]
+    # print ('\ndf1 describe direction =  0\n',rslt_df.describe())
+    # # print ('\ndf1=\n',df1.loc[:, ['ema','macd','stoc', 'rsi']])
+    print('\ndf11 describe=\n',df1.loc[:, ['percentage', 'nvo', 'range', 'mom5', 'mom10', 'mom20', 'mom50', 'rsi5', 'rsi10', 'rsi20', 'rsi50',  'stoc10', 'stoc20', 'stoc50', 'stoc200']].describe())
     return df1
 
 
@@ -465,7 +489,7 @@ def plot_histogram(x, bins, title, xlabel, ylabel):
     plt.title(title)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
-    plt.savefig('plots/model/'+title+'.png')
+    plt.savefig('files/output/'+title+'.png')
 
 
 def plot_confusion_matrix(cm,
@@ -558,7 +582,7 @@ def plot_barchart2(y, title="BT_pred vs observed", ylabel="Price", xlabel="Date"
     cax.bar(np.arange(l)[greater_than_zero], y[greater_than_zero], color='blue')
     cax.bar(np.arange(l)[lesser_than_zero ], y[lesser_than_zero ], color='red')
     pl.title(title+"TP+TN="+str(sum(y))+'#, ' +str(round(sum(y)/l*100,2))+"%")
-    pl.savefig('plots/model/'+title+'.png')
+    pl.savefig('files/output/'+title+'.png')
     #pl.show()
 
 

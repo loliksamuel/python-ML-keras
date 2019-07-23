@@ -37,17 +37,19 @@ import matplotlib.pyplot as plt
 
 # https://towardsdatascience.com/deep-learning-for-beginners-practical-guide-with-python-and-keras-d295bfca4487
 # https://www.youtube.com/watch?v=aircAruvnKk
-
-batch_size  = 128# we cannot pass the entire data into network at once , so we divide it to batches . number of samples that we will pass through the network at 1 time and use for each epoch. default is 32
-epochs      = 100# 50  #  iterations. on each, train all data, then evaluate, then adjust parameters (weights and biases)
-#iterations  = 60000/128
-size_input   = 10#x_train.shape[1] # no of features
-size_hidden  = 512 # If a model has more hidden units (a higher-dimensional representation space), and/or more layers, then the network can learn more complex representations. However, it makes the network more computationally expensive and may lead to overfit
-size_output  = 2 # there are 3 classes (buy.sell. hold) or (green,red,hold)
-name_output  = ['Green bar', 'Red Bar']# 'no direction Bar'
-#iterations  = 60000/128
 symbol       = '^GSPC' #^GSPC=SP500 (3600->1970 or 12500 =2000) DJI(300, 1988)  QQQ(300, 2000) GOOG XLF XLV
 skipDays     = 3600#12500 total 13894 daily bars
+epochs       = 500# 50  #  iterations. on each, train all data, then evaluate, then adjust parameters (weights and biases)
+size_hidden  = 512 # If a model has more hidden units (a higher-dimensional representation space), and/or more layers, then the network can learn more complex representations. However, it makes the network more computationally expensive and may lead to overfit
+batch_size   = 128# we cannot pass the entire data into network at once , so we divide it to batches . number of samples that we will pass through the network at 1 time and use for each epoch. default is 32
+#iterations  = 60000/128
+names_input   = ['nvo', 'mom5', 'mom10', 'mom20', 'mom50', 'sma10', 'sma20', 'sma50', 'sma200', 'sma400', 'range_sma', 'range_sma1', 'range_sma2', 'range_sma3', 'range_sma4', 'bb_hi10', 'bb_lo10', 'bb_hi20', 'bb_lo20', 'bb_hi50', 'bb_lo50', 'bb_hi200', 'bb_lo200', 'rel_bol_hi10', 'rel_bol_lo10', 'rel_bol_hi20', 'rel_bol_lo20', 'rel_bol_hi50', 'rel_bol_lo50', 'rel_bol_hi200', 'rel_bol_lo200', 'rsi10', 'rsi20', 'rsi50', 'rsi5', 'stoc10', 'stoc20', 'stoc50', 'stoc200']
+names_output  = ['Green bar', 'Red Bar', 'Hold Bar']#Green bar', 'Red Bar', 'Hold Bar'
+size_input   = len(names_input) # 39#x_train.shape[1] # no of features
+size_output  = len(names_output)#  2 # there are 3 classes (buy.sell. hold) or (green,red,hold)
+#iterations  = 60000/128
+print('size_input=',size_input)
+print('size_output=',size_output)
 percentTestSplit = 0.33#33% from data will go to test
 
 print('\nLoading  data')
@@ -68,7 +70,7 @@ print('\n======================================')
 #
 
 # Get stock data
-df_all = get_data_from_disc(symbol, skipDays)
+df_all = get_data_from_disc(symbol, skipDays, size_output = size_output)
 print(df_all.tail())
 
 # Slice and plot
@@ -80,17 +82,16 @@ plot_selected(df_all,           title='TA-price of '+symbol+' vs time'          
 plot_selected(df_all.tail(500), title='TA-sma 1,10,20,50,200 of '+symbol+' vs time' , columns=[  'Close', 'sma10', 'sma20', 'sma50',  'sma200',  'sma400', 'bb_hi10', 'bb_lo10', 'bb_hi20', 'bb_lo20', 'bb_hi50',  'bb_lo200', 'bb_lo50', 'bb_hi200'],  shouldNormalize=False, symbol=symbol)
 
 plot_selected(df_all.tail(500), title='TA-range sma,bband of '+symbol+' vs time'    , columns=[  'range_sma', 'range_sma1', 'range_sma2', 'range_sma3',  'range_sma4', 'rel_bol_hi10',  'rel_bol_hi20', 'rel_bol_hi200', 'rel_bol_hi50'],  shouldNormalize=False, symbol=symbol)
-plot_selected(df_all.tail(500), title='TA-rsi,stoc of '+symbol+' vs time'           , columns=[  'rsi10', 'rsi20', 'rsi50', 'rsi200', 'stoc10', 'stoc20', 'stoc50', 'stoc200'],  shouldNormalize=False, symbol=symbol)
+plot_selected(df_all.tail(500), title='TA-rsi,stoc of '+symbol+' vs time'           , columns=[  'rsi10', 'rsi20', 'rsi50', 'rsi5', 'stoc10', 'stoc20', 'stoc50', 'stoc200'],  shouldNormalize=False, symbol=symbol)
 
 #plot_selected(df, ['Date','Close']                                    , start_date, end_date, shouldNormalize=False)
 elements = df_all.size
 shape=df_all.shape
 
-
 print('\nsplit to train & test data')
 print('\n======================================')
 #df_data = df_all.loc[:,   [ 'Open', 'High', 'Low', 'Close', 'range', 'sma10', 'sma20', 'sma50',  'sma200',  'range_sma']]close
-df_data = df_all.loc[:,                                             [ 'sma10', 'sma20', 'sma50',  'sma200',  'sma400', 'range_sma', 'range_sma1', 'range_sma2', 'range_sma3',  'range_sma4', 'bb_hi10', 'bb_lo10', 'bb_hi20', 'bb_lo20', 'bb_hi50', 'bb_lo50', 'bb_hi200', 'bb_lo200', 'rel_bol_hi10', 'rel_bol_lo10', 'rel_bol_hi20', 'rel_bol_lo20', 'rel_bol_hi50', 'rel_bol_lo50', 'rel_bol_hi200', 'rel_bol_lo200', 'rsi10', 'rsi20', 'rsi50', 'rsi200', 'stoc10', 'stoc20', 'stoc50', 'stoc200']]
+df_data = df_all.loc[:, names_input]
 print('columns=', df_data.columns)
 print('\ndata describe=\n',df_data.describe())
 print('shape=',str(shape), " elements="+str(elements), ' rows=',str(shape[0]))
@@ -129,7 +130,7 @@ print(df_y)
 #      print(X_train,' , ', X_test)
 #      print(X_train,' , ', y_train)
 #      print(len(X_train),' , ', len(X_test))
-#exit(0)
+#
 '''
 TRAIN: [0] TEST: [1]
 TRAIN: [0 1] TEST: [2]
@@ -244,8 +245,8 @@ print('\n======================================')
 layers = model.layers
 #B_Output_Hidden = model.layers[0].get_weights()[1]
 #print ('model.layers=\n', layers)
-print ('model.inputs=\n', size_input)
-print ('model.output=\n', size_output)
+print ('size.model.features(size_input) =\n', size_input)
+print ('size.model.target  (size_output)=\n', size_output)
 
 print('\nplot_accuracy_loss_vs_time...')
 history_dict = history.history
@@ -274,13 +275,45 @@ x_all = np.concatenate((x_train, x_test), axis=0)
 Y_pred = model.predict(x_all)
 print('labeled   as ', y_test[0], ' highest confidence for ' , np.argmax(y_test[0]))
 print('predicted as ' ,Y_pred[0], ' highest confidence for ' , np.argmax(Y_pred[0]))
-y_pred = np.argmax(Y_pred, axis=1)
-Y_test = np.argmax(y_test, axis=1)
+y_pred = np.argmax(Y_pred, axis=1).tolist()
+Y_test = np.argmax(y_test, axis=1).tolist()
 
+# print (type(y_pred))
+# print (type(Y_test))
+#
+# # y1=y_pred.tolist()
+# # y2=Y_test.tolist()
+# y1=np.array(y_pred)
+# y2=np.array(Y_test)
+#
+# yb = y1 ==  y2
+# print('prediction list= ' , y1)
+# print('labelized  list= ' , y2)
+# print('result     list= ' , yb)
+# print (type(y1))
+# print (type(y2))
+# print (type(yb))
+# yb = np.asarray(yb)
+# print (type(yb))
+# plot_barchart2  (np.asarray(yb),  title="BT_pred vs observed", ylabel="x", xlabel="result")
+# #
+# n_folds = 10
+# cv_scores, model_history = list(), list()
+# for _ in range(n_folds):
+#     # split data
+#     X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.10, random_state = np.random.randint(1,1000, 1)[0])
+#     # evaluate model
+#     model, test_acc = evaluate_model(X_train, X_val, y_train, y_val)
+#     print('>%.3f' % val_acc)
+#     cv_scores.append(val_acc)
+#     model_history.append(model)
+#
+# print('Estimated Accuracy %.3f (%.3f)' % (np.mean(cv_scores), np.std(cv_scores)))
 
-filename='mlpt_'+symbol+'_'+str(epochs)+'_'+str(size_hidden)+'.model'
-print('\nSave model as ',filename)
-model.save('models/'+filename)# 5.4 mb
+dir = 'files/output/'
+filename='mlpt_'+symbol+'_epc'+str(epochs)+'_hid'+str(size_hidden)+'_inp'+str(size_input)+'_out'+str(size_output)+'.model'
+print('\nSave model as ',dir,'',filename)
+model.save(dir+filename)# 5.4 mb
 
 
 
@@ -291,14 +324,14 @@ bins = np.linspace(np.math.ceil(min(data)),    np.math.floor(max(data)),    100)
 
 plot_histogram(  x = data
                   , bins=100
-                  , title = 'diff bw open and close - Gaussian data '
+                  , title = 'TA-diff bw open and close - Gaussian data '
                   , xlabel ='range of a bar from open to close'
                   , ylabel ='count')
 
 
 plot_histogram(    x = df_all['range_sma']
                     , bins=100
-                    , title = 'diff bw 2 sma - Gaussian data'
+                    , title = 'TA-diff bw 2 sma - Gaussian data'
                     , xlabel ='diff bw 2 sma 10,20  '
                     , ylabel ='count')
 

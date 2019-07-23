@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 fix.pdr_override()
 
 
-def back_test(filename, symbol, skipRows, start_date, end_date):
+def back_test(filename, symbol, skipRows, names_input,names_output, start_date, end_date):
     """
     A simple back test for a given date period
     :param model     : the chosen strategy. Note to have already formed the model, and fitted with training data.
@@ -24,13 +24,13 @@ def back_test(filename, symbol, skipRows, start_date, end_date):
     """
 
     print('\nLoading model')
-    model    = tf.keras.models.load_model('models/'+filename)
+    model    = tf.keras.models.load_model('files/output/'+filename)
 
     print('\nLoading data of symbol ', symbol)
     df_all =  get_data_from_disc(symbol,skipRows )
 
     print('\nExtrating x')
-    df_x = df_all.loc[:,   ['sma10', 'sma20', 'sma50',  'sma200',  'sma400', 'range_sma', 'range_sma1', 'range_sma2', 'range_sma3',  'range_sma4', 'bb_hi10', 'bb_lo10', 'bb_hi20', 'bb_lo20', 'bb_hi50', 'bb_lo50', 'bb_hi200', 'bb_lo200', 'rel_bol_hi10', 'rel_bol_lo10', 'rel_bol_hi20', 'rel_bol_lo20', 'rel_bol_hi50', 'rel_bol_lo50', 'rel_bol_hi200', 'rel_bol_lo200', 'rsi10', 'rsi20', 'rsi50', 'rsi200', 'stoc10', 'stoc20', 'stoc50', 'stoc200']]
+    df_x = df_all.loc[:,   names_input]
     df_oc = df_all.loc[:,   [ 'range', 'Open' , 'Close' ]]
 
     print('\nExtrating y')
@@ -45,7 +45,7 @@ def back_test(filename, symbol, skipRows, start_date, end_date):
     print('\nPredicting... ')
     df_y_pred = model.predict(df_x)
 
-    size_output = 2
+    size_output  = len(names_output)
     lenxx = len(df_y_observed)
     y = keras.utils.to_categorical(df_y_observed, size_output)
     print('len=',lenxx,' y=',y)
@@ -60,6 +60,7 @@ def back_test(filename, symbol, skipRows, start_date, end_date):
     pointUsdRatio = 1
     initialDeposit = 10000
     pointsCurr   = 0
+    percentCurr  = 0
     listTradesPercent = []
     listTrades   =[]
     listLongs    =[]
@@ -113,12 +114,12 @@ def back_test(filename, symbol, skipRows, start_date, end_date):
     total positions    :  8384 # ,  46.61 % won 
     '''
     for i in range(lenxx-1):#0 to 13894   #for index, row in df_oc.iterrows():
-        currBar     = df_oc[(i+0):(i+1)]
+        currBar      = df_oc[(i+0):(i+1)]
         #nextBar     = df_oc[(i+1):(i+2)]
-        currBarIsUp = df_y_observed[(i+0):(i+1)]
+        currBarIsUp  = df_y_observed[(i+0):(i+1)]
         print('\n#',i,'out of ',lenxx,'. curr Bar =', currBar)
         bar_range = currBar['range'].iloc[0]  #  bar_range = row['range']
-        open      = currBar ['Open'].iloc[0]  #  bar_range = row['Open']
+        open      = currBar[ 'Open'].iloc[0]  #  bar_range = row['Open']
         close     = currBar['Close'].iloc[0]  #  bar_range = row['Close']
         print(' curr Bar range=', bar_range)
 
@@ -140,7 +141,7 @@ def back_test(filename, symbol, skipRows, start_date, end_date):
             percentCurr = bar_range/open*100
             if  currBarUp == 1 :
                 listWinners.append(pointsCurr)
-                win_long    += 1
+                win_long    += 1#elif currBarUp<0
             else:
                 listLosers.append(pointsCurr)
                 lose_long   += 1
@@ -148,7 +149,8 @@ def back_test(filename, symbol, skipRows, start_date, end_date):
 
             print(' buy @', str(round(open,2)), ' exit @', str(round(close,2)), ' profit = ', pointsCurr)
         else:# red bar prediction
-            pointsCurr = -bar_range
+            pointsCurr  = -bar_range
+            percentCurr = -bar_range/open*100
             if  currBarUp == 1  :
                 listLosers.append(pointsCurr)
                 lose_shrt    += 1
@@ -222,7 +224,7 @@ def back_test(filename, symbol, skipRows, start_date, end_date):
     # plot_list(np.cumsum(listTrades.index(7000,8000), dtype=float) , title="commulative profit over time 4st year", xlabel="trades",  ylabel="points")
     # plot_list(np.cumsum(listTrades.index(1000,-1), dtype=float) , title="commulative profit over time last  year", xlabel="trades",  ylabel="points")
     # plot_list(np.cumsum(listTrades, dtype=float) , title="commulative profit over time", xlabel="trades",  ylabel="points")
-    plt.savefig('plots/bt/'+title+'.png')
+    plt.savefig('files/output/'+title+'.png')
     #print (listTrades)
 
 
@@ -230,11 +232,19 @@ def back_test(filename, symbol, skipRows, start_date, end_date):
 
 print('\nBacktesting')
 print('\n=========================================')
+pd.set_option('display.max_columns', 500)
+pd.set_option('display.width'      , 1000)
 
-symbol='^GSPC'# ^GSPC = SP500 3600, DJI 300
-skipRows = 3600#3600 6600
-epochs=50
-size_hidden=512
-filename = 'mlpt_'+symbol+'_'+str(epochs)+'_'+str(size_hidden)+'.model'
+symbol      ='^GSPC'# ^GSPC = SP500 3600, DJI 300
+skipRows    = 3600#3600 6600
+epochs      = 500
+size_hidden = 512
+names_input   = ['nvo', 'mom5', 'mom10', 'mom20', 'mom50', 'sma10', 'sma20', 'sma50', 'sma200', 'sma400', 'range_sma', 'range_sma1', 'range_sma2', 'range_sma3', 'range_sma4', 'bb_hi10', 'bb_lo10', 'bb_hi20', 'bb_lo20', 'bb_hi50', 'bb_lo50', 'bb_hi200', 'bb_lo200', 'rel_bol_hi10', 'rel_bol_lo10', 'rel_bol_hi20', 'rel_bol_lo20', 'rel_bol_hi50', 'rel_bol_lo50', 'rel_bol_hi200', 'rel_bol_lo200', 'rsi10', 'rsi20', 'rsi50', 'rsi5', 'stoc10', 'stoc20', 'stoc50', 'stoc200']
+names_output  = ['Green bar', 'Red Bar']#, 'Hold Bar']#Green bar', 'Red Bar', 'Hold Bar'
+size_input   = len(names_input) # 39#x_train.shape[1] # no of features
+size_output  = len(names_output)#  2 # there are 3 classes (buy.sell. hold) or (green,red,hold)
+filename = 'mlpt_'+symbol+'_epc'+str(epochs)+'_hid'+str(size_hidden)+'_inp'+str(size_input)+'_out'+str(size_output)+'.model'
 
-back_test(filename, symbol, skipRows, start_date='1970-01-03', end_date='2019-05-05')
+
+print('trying to backtest with model ',filename ,' and input values = ', names_input)
+back_test(filename, symbol, skipRows, names_input, names_output, start_date='1970-01-03', end_date='2019-05-05')
