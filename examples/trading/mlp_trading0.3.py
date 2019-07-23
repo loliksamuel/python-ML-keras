@@ -27,7 +27,7 @@ import pandas as pd
 import tensorflow as tf
 from examples.trading.utils import *
 from sklearn.model_selection import train_test_split, TimeSeriesSplit
-
+from scipy import stats
 import keras
 from keras.layers import Dense, Dropout
 from keras.models import Sequential
@@ -39,7 +39,7 @@ import matplotlib.pyplot as plt
 # https://www.youtube.com/watch?v=aircAruvnKk
 symbol       = '^GSPC' #^GSPC=SP500 (3600->1970 or 12500 =2000) DJI(300, 1988)  QQQ(300, 2000) GOOG XLF XLV
 skipDays     = 3600#12500 total 13894 daily bars
-epochs       = 500# 50  #  iterations. on each, train all data, then evaluate, then adjust parameters (weights and biases)
+epochs       = 600# 50  #  iterations. on each, train all data, then evaluate, then adjust parameters (weights and biases)
 size_hidden  = 512 # If a model has more hidden units (a higher-dimensional representation space), and/or more layers, then the network can learn more complex representations. However, it makes the network more computationally expensive and may lead to overfit
 batch_size   = 128# we cannot pass the entire data into network at once , so we divide it to batches . number of samples that we will pass through the network at 1 time and use for each epoch. default is 32
 #iterations  = 60000/128
@@ -92,31 +92,36 @@ print('\nsplit to train & test data')
 print('\n======================================')
 #df_data = df_all.loc[:,   [ 'Open', 'High', 'Low', 'Close', 'range', 'sma10', 'sma20', 'sma50',  'sma200',  'range_sma']]close
 df_data = df_all.loc[:, names_input]
+df_y    = df_all.loc[:, 'isUp'     ]#np.random.randint(0,2,size=(shape[0], ))
 print('columns=', df_data.columns)
-print('\ndata describe=\n',df_data.describe())
+print('\nall data describe=\n',df_data.describe())
 print('shape=',str(shape), " elements="+str(elements), ' rows=',str(shape[0]))
 (x_train, x_test)  = train_test_split(df_data.values, test_size=percentTestSplit, shuffle=False)#shuffle=False in timeseries
+(y_train, y_test)  = train_test_split(df_y.values   , test_size=percentTestSplit, shuffle=False)
 # tscv = TimeSeriesSplit(n_splits=5)
 print('\ntrain data', x_train.shape)
 print(x_train[0])
 print(x_train[1])
+print(x_train[-1])
+print(x_train[-2])
 
 #plot_image(x_train, 'picture example')
 #plot_images(x_train, y_train, 'picture examples')
 print('\ntest data', x_test.shape)
-print(x_test[0])
+print(x_test[0])#0=9308
 print(x_test[1])
-
+print(x_test[-2])
+print(x_test[-1])
 
 print('\nLabeling')
 print('\n======================================')
-df_y = df_all['isUp']#np.random.randint(0,2,size=(shape[0], ))
+
 #y = np.random.randint(0,2,size=(shape[0], ))
 #print(y)
 #df_y = pd.DataFrame()#, columns=list('is_up'))
 #df_y['isUp'] = y
 print(df_y)
-(y_train, y_test)  = train_test_split(df_y.values, test_size=percentTestSplit, shuffle=False)
+
 #
 # X = np.array([[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12]])
 # y = np.array([100, 200, 300, 400, 500, 600])
@@ -142,6 +147,9 @@ TRAIN: [0 1 2 3 4] TEST: [5]
 
 print(df_y.tail())
 print('\nlabel describe\n',df_y.describe())
+print('\nlabel describe train\n', stats.describe(y_train))
+print('\nlabel describe train\n', stats.describe(y_test))
+
 #(x_train, y_train)  = train_test_split(df.as_matrix(), test_size=0.33, shuffle=False)
 
 print('\ntrain labels',y_train.shape)
@@ -153,23 +161,7 @@ print(y_test[0])
 print(y_test[1])
 
 print(x_train.shape[0], 'train samples')
-print( x_test.shape[0], 'test samples')
-#df_GOOG = pd.read_csv('GOOG.csv', index_col="Date", parse_dates=True, usecols=["Date","Close","High","Low"], na_values=["nan"])
-
-# df.GOOG.add(avg (df_GOOG))
-# df.GOOG.add(atr (df_GOOG))
-# df.GOOG.add(band(df_GOOG))
-# double currAtr  = iATR(aSymbol, aTf,  aPeriod,  aShift);
-# double currAtr  = iCustom(aSymbol, aTf, "AvgAtr3",aPeriod,   10,0,0,   20,0,0, 0,aShift);
-# double avgAtr   = iCustom(aSymbol, aTf, "AvgAtr3",aPeriod,   10,0,0,   20,0,0, 1,aShift);
-# double avgAtr2  = iCustom(aSymbol, aTf, "AvgAtr3",aPeriod,   10,0,0,   20,0,0, 2,aShift);
-#currSpread
-#currSwap
-#economic
-# (x_train, y_train), (x_test, y_test) = train_test_split(X, y_train, test_size=0.33
-
-
-
+print( x_test.shape[0], 'test  samples')
 
 
 print('\nClean data)')
@@ -180,11 +172,14 @@ print('\n======================================')
 print('\nNormalize   to    0.0-1.0 ')# very strange results if we dont
 x_train = tf.keras.utils.normalize(x_train, axis=1)
 x_test  = tf.keras.utils.normalize(x_test , axis=1)
+
+# print('\ndata  describe train\n', stats.describe(x_train))
+# print('\ndata  describe train\n', stats.describe(x_test))
 #print('columns=', x_train.columns)
 #print ('\ndf1=\n',x_train.loc[:, ['Open','High', 'Low', 'Close', 'range']])
 #print ('\ndf1=\n',x_train.loc[:, ['sma10','sma20','sma50','sma200','range_sma']])
 print(x_train[0])
-print(x_train)
+
 #print(x_train2[0])
 #plot_image(x_test,'picture example')
 
