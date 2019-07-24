@@ -134,9 +134,9 @@ def plot_stat_loss_vs_time(history_dict, title='model loss over time') :
     epochs = range(1, len(acc_train) + 1)
 
     plt.clf()
-    plt.plot(epochs, loss_train   , 'bo', label='train loss')
+    plt.plot(epochs, loss_train   , 'bo', color='red'   ,label='train loss')
     # b is for "solid blue line"
-    plt.plot(epochs, loss_test, 'b', label='test loss')
+    plt.plot(epochs, loss_test, 'b', color='red'   ,label='test loss')
     plt.title(title)
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
