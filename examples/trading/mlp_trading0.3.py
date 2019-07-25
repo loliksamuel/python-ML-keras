@@ -15,9 +15,12 @@ bug tracker
 -----------------------------
 priority | name
 -----------------------------
-1        | rubi, how accuracy so high?? 64%!
-2        | should use PURGED K-FOLD Cross Validation or  TimeSeriesSplit instead of standart split
-3        | rubi, which normalize function to use?
+1        | why accuracy so high?? 64% and why so volatile ?
+2        | should use PURGED K-FOLD Cross Validation or  TimeSeriesSplit instead of standard split
+3        | which normalize function to use?
+4        | grid search
+5        | confusion matrix
+6        | ensamble LSTM+RNN
 '''
 
 from __future__ import absolute_import, division, print_function, unicode_literals
@@ -29,29 +32,40 @@ from examples.trading.utils import *
 from sklearn.model_selection import train_test_split, TimeSeriesSplit
 from scipy import stats
 import keras
+from keras import regularizers
+from keras import optimizers
 from keras.layers import Dense, Dropout
 from keras.models import Sequential
-from keras.optimizers import RMSprop
+from keras.optimizers import RMSprop, SGD
 import matplotlib.pyplot as plt
 #import pandas.io.data as web
 
 # https://towardsdatascience.com/deep-learning-for-beginners-practical-guide-with-python-and-keras-d295bfca4487
 # https://www.youtube.com/watch?v=aircAruvnKk
+#best so far: '^GSPC' 3600 5000 15  128 0.00001 0.9 None 0.0 glorot_uniform
 symbol       = '^GSPC' #^GSPC=SP500 (3600->1970 or 12500 =2000) DJI(300, 1988)  QQQ(300, 2000) GOOG XLF XLV
 skipDays     = 3600#12500 total 13894 daily bars
-epochs       = 600# 50  #  iterations. on each, train all data, then evaluate, then adjust parameters (weights and biases)
-size_hidden  = 512 # If a model has more hidden units (a higher-dimensional representation space), and/or more layers, then the network can learn more complex representations. However, it makes the network more computationally expensive and may lead to overfit
+epochs       = 5000# 50 5000 #  iterations. on each, train all data, then evaluate, then adjust parameters (weights and biases)
+size_hidden  = 15# 15 20 512 # If a model has more hidden units (a higher-dimensional representation space), and/or more layers, then the network can learn more complex representations. However, it makes the network more computationally expensive and may lead to overfit
 batch_size   = 128# we cannot pass the entire data into network at once , so we divide it to batches . number of samples that we will pass through the network at 1 time and use for each epoch. default is 32
+loss         = 'categorical_crossentropy' # a little better results than binary_crossentropy
+lr           = 0.00001#default=0.001   best=0.00002
+rho          = 0.9 # default=0.9   0.5 same
+epsilon      = None
+decay        = 0.0
+kernel_init  = 'glorot_uniform'#  'glorot_uniform'(default),'normal', 'uniform'
 #iterations  = 60000/128
 names_input   = ['nvo', 'mom5', 'mom10', 'mom20', 'mom50', 'sma10', 'sma20', 'sma50', 'sma200', 'sma400', 'range_sma', 'range_sma1', 'range_sma2', 'range_sma3', 'range_sma4', 'bb_hi10', 'bb_lo10', 'bb_hi20', 'bb_lo20', 'bb_hi50', 'bb_lo50', 'bb_hi200', 'bb_lo200', 'rel_bol_hi10', 'rel_bol_lo10', 'rel_bol_hi20', 'rel_bol_lo20', 'rel_bol_hi50', 'rel_bol_lo50', 'rel_bol_hi200', 'rel_bol_lo200', 'rsi10', 'rsi20', 'rsi50', 'rsi5', 'stoc10', 'stoc20', 'stoc50', 'stoc200']
 names_output  = ['Green bar', 'Red Bar']#, 'Hold Bar']#Green bar', 'Red Bar', 'Hold Bar'
 size_input   = len(names_input) # 39#x_train.shape[1] # no of features
 size_output  = len(names_output)#  2 # there are 3 classes (buy.sell. hold) or (green,red,hold)
 #iterations  = 60000/128
+percentTestSplit = 0.33#33% from data will go to test
+seed = 7
+np.random.seed(seed)
+
 print('size_input=',size_input)
 print('size_output=',size_output)
-percentTestSplit = 0.33#33% from data will go to test
-
 print('\nLoading  data')
 print('\n======================================')
 # Define date range
@@ -200,19 +214,55 @@ size_input   = x_train.shape[1] # no of features
 
 model = Sequential()# stack of layers
 #model.add(tf.keras.layers.Flatten())
-model.add(Dense  (size_hidden, activation='relu', input_shape=(size_input,)))
-model.add(Dropout(0.2))#for generalization
+model.add(Dense  (size_hidden, activation='relu', input_shape=(size_input,), kernel_initializer=kernel_init))#, 'glorot_uniform','normal', 'uniform'
+#model.add(Dense  (size_hidden, activation='relu', input_shape=(size_input,), kernel_regularizer=regularizers.l2(0.01)))#make worse (checked with size_hidden=20,256)
+
+model.add(Dropout(0.2))#for generalization.
+
 model.add(Dense  (size_hidden, activation='relu'))
+
+model.add(Dropout(0.2))#for generalization.
+
+model.add(Dense  (size_hidden, activation='relu'))
+#model.add(Dense  (size_hidden, kernel_regularizer=regularizers.l2(0.01), activation='relu'))#make worse
 model.add(Dropout(0.2))#regularization technic by removing some nodes
+# Add fully connected layer with a ReLU activation function and L2 regularization
+#model.add(Dense(units=15, input_dim=15     ,  kernel_regularizer=regularizers.l2(0.001), activity_regularizer=regularizers.l1(0.001)))#make worse. 0.01 determines how much we penalize higher parameter values.
+#model.add(Dense(units=16,                     kernel_regularizer=regularizers.l2(0.001),activation='relu'))
+
+#model.add(Dropout(0.2))#regularization technic by removing some nodes
+#model.add(Dense(units=16,                     kernel_regularizer=regularizers.l2(0.01), activation='relu'))#make worse.
+#model.add(Dense(units=16,                     kernel_regularizer=regularizers.l2(0.001),activation='relu'))
+#model.add(Dense(units=16,                     activation='relu'))#not improve
 model.add(Dense  (size_output, activation='softmax'))# last layer always has softmax(except for regession problems and  binary- 2 classes where sigmoid is enough)
+#model.add(Dense  (size_output, activation='sigmoid'))# worse results on hidden=20
 # For binary classification, softmax & sigmoid should give the same results, because softmax is a generalization of sigmoid for a larger number of classes.
 # softmax:  loss: 0.3099 - acc: 0.8489 - val_loss: 0.2929 - val_acc: 0.8249
 # sigmoid:  loss: 0.2999 - acc: 0.8482 - val_loss: 0.1671 - val_acc: 0.9863
 
 # Prints a string summary of the  neural network.')
 model.summary()
-model.compile(loss      = 'categorical_crossentropy',# measure how accurate the model during training
-              optimizer = RMSprop(),#this is how model is updated based on data and loss function
+
+#model.compile(loss      = 'log_loss',# no function
+model.compile(loss      = loss,# a little better results than binaryEntropy
+             # optimizer = SGD(lr=1, momentum=0.9),# make worse! try to increase your learning rate parameter etato force the network to converge faster to the optimum weights. Be aware though, if you increase it too much though, it will become unstable.
+             # optimizer = SGD(lr=0.1, momentum=0.9),
+             # optimizer = SGD(lr=0.01, momentum=0.9),
+             # optimizer = SGD(lr=0.001, momentum=0.9),
+             # optimizer = SGD(lr=0.0001, momentum=0.9),
+             # optimizer = SGD(lr=0.00001, momentum=0.9),
+             # Use dynamic learning rate
+
+#model.compile(loss      = 'categorical_crossentropy',# measure how accurate the model during training
+              # optimizer = RMSprop(lr=0.1),#this is how model is updated based on data and loss function
+              # optimizer = RMSprop(lr=0.01),#this is how model is updated based on data and loss function
+              # optimizer = RMSprop(lr=0.001),#this is default
+              # optimizer = RMSprop(lr=0.0001),#interesting
+                optimizer = RMSprop(lr=lr, rho=rho, epsilon=epsilon, decay=decay),#best
+              #  optimizer = RMSprop(lr=0.00001,rho=0.5, epsilon=None, decay=0.0),#best default = rho=0-1, epsilon=1e-08, decay=0.0  #1e-06
+              # optimizer = RMSprop(lr=0.00004),#interesting
+              # optimizer = RMSprop(lr=0.000001),#bad
+              #Adagrad(), Adadelta(), Adam(),Adamax(), Nadam(), TFOptimizer(),
               metrics   = ['accuracy'])
 
 
@@ -230,7 +280,7 @@ history = model.fit(  x_train
                     , batch_size     = batch_size
                     , epochs         = epochs
                     , validation_data= (x_test, y_test)
-                    , verbose        = 1
+                    , verbose        = 2
                   # , callbacks=[early_stop, PrintDot()]#Early stopping is a useful technique to prevent overfitting.
                       )
 
@@ -253,7 +303,7 @@ hist['epoch'] = history.epoch
 print(hist.tail())
 
 plot_stat_loss_vs_accuracy(history_dict)
-score = model.evaluate(x_test, y_test, verbose=0)                                     # random                                |  calc label
+score = model.evaluate(x_test, y_test, verbose=1)                                     # random                                |  calc label
 print('Test loss:    ', score[0], ' (is it close to 0?)')                            #Test,train loss     : 0.6938 , 0.6933   |  0.47  0.5
 print('Test accuracy:', score[1], ' (is it close to 1 and close to train accuracy?)')#Test,train accuracy : 0.5000 , 0.5000   |  0.69, 0.74
 

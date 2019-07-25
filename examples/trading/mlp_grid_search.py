@@ -8,6 +8,10 @@ import numpy
 # Function to create model, required for KerasClassifier
 def create_model(optimizer='rmsprop', init='glorot_uniform'):
     # create model
+
+    size_input = 39
+    size_hidden = 15
+    size_output = 2
     model = Sequential()
     model.add(Dense(12, input_dim=8, kernel_initializer=init, activation='relu'))
     model.add(Dense(8, kernel_initializer=init, activation='relu'))
