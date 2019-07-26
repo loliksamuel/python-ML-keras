@@ -254,14 +254,18 @@ class MlpTrading(object):
         return model
 
     def _create_model_lstm(self, size_hidden, dropout=0.2, kernel_init='glorot_uniform'):
-
+#input_shape = (input_length, input_dim)
+#input_shape=(self.size_input,)   equals to    input_dim = self.size_input
+#X_train = np.reshape(X_train, (X_train.shape[0], 1, X_train.shape[1]))
+#X_test = np.reshape(X_test, (X_test.shape[0], 1, X_test.shape[1]))
         model = Sequential()
-        model.add(Embedding(input_dim = (self.size_input), output_dim = size_hidden, input_length = self.size_input))#input_dim=input_shape
-        model.add(LSTM(output_dim=size_hidden, activation='sigmoid', inner_activation='hard_sigmoid', return_sequences=True))
+        model.add(Embedding(input_dim = (self.size_input), output_dim = size_hidden, input_length = self.size_input))
+        #model.add(Embedding( input_shape=(self.size_input,size_hidden), kernel_initializer=kernel_init))
+        model.add(LSTM(units=size_hidden, activation='sigmoid', inner_activation='hard_sigmoid', return_sequences=True))
         model.add(Dropout(dropout))
-        model.add(LSTM(output_dim=size_hidden, activation='sigmoid', inner_activation='hard_sigmoid'))
+        model.add(LSTM(units=size_hidden, activation='sigmoid', inner_activation='hard_sigmoid'))
         model.add(Dropout(dropout))
-        model.add(Dense(self.size_output, activation='sigmoid'))
+        model.add(Dense(self.size_output, activation='softmax'))
         model.summary()
         return model
 
@@ -283,7 +287,7 @@ class MlpTrading(object):
                          batch_size=batch_size,
                          epochs=epochs,
                          validation_data=(self.x_test, self.y_test),
-                         validation_split = 0.1,
+                         #validation_split = 0.1,
                          verbose=verbose)
 
     # |--------------------------------------------------------|
