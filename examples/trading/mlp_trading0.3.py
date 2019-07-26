@@ -46,7 +46,8 @@ import matplotlib.pyplot as plt
 symbol       = '^GSPC' #^GSPC=SP500 (3600->1970 or 12500 =2000) DJI(300, 1988)  QQQ(300, 2000) GOOG XLF XLV
 skipDays     = 3600#12500 total 13894 daily bars
 epochs       = 5000# 50 5000 #  iterations. on each, train all data, then evaluate, then adjust parameters (weights and biases)
-size_hidden  = 15# 15 20 512 # If a model has more hidden units (a higher-dimensional representation space), and/or more layers, then the network can learn more complex representations. However, it makes the network more computationally expensive and may lead to overfit
+size_hidden  = 15#below 10 it is underfit
+# 15 20 512 # If a model has more hidden units (a higher-dimensional representation space), and/or more layers, then the network can learn more complex representations. However, it makes the network more computationally expensive and may lead to overfit
 batch_size   = 128# we cannot pass the entire data into network at once , so we divide it to batches . number of samples that we will pass through the network at 1 time and use for each epoch. default is 32
 loss         = 'categorical_crossentropy' # a little better results than binary_crossentropy
 lr           = 0.00001#default=0.001   best=0.00002
@@ -110,8 +111,11 @@ df_y    = df_all.loc[:, 'isUp'     ]#np.random.randint(0,2,size=(shape[0], ))
 print('columns=', df_data.columns)
 print('\nall data describe=\n',df_data.describe())
 print('shape=',str(shape), " elements="+str(elements), ' rows=',str(shape[0]))
-(x_train, x_test)  = train_test_split(df_data.values, test_size=percentTestSplit, shuffle=False)#shuffle=False in timeseries
-(y_train, y_test)  = train_test_split(df_y.values   , test_size=percentTestSplit, shuffle=False)
+#(x_train, x_test)  = train_test_split(df_data.values, test_size=percentTestSplit, shuffle=True)#shuffle=False in timeseries
+#(y_train, y_test)  = train_test_split(df_y.values   , test_size=percentTestSplit, shuffle=True)
+import sklearn.model_selection as model_selection
+x_train, x_test, y_train, y_test = model_selection.train_test_split(df_data.values, df_y.values, train_size=0.66,test_size=0.33,shuffle=False, random_state=101)
+
 # tscv = TimeSeriesSplit(n_splits=5)
 print('\ntrain data', x_train.shape)
 print(x_train[0])

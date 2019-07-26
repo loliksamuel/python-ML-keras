@@ -7,7 +7,7 @@ from keras.utils import to_categorical
 from keras.models import Sequential
 from keras.layers import Dense, Dropout
 from keras.optimizers import RMSprop
-
+from ww import f
 import pandas as pd
 import numpy as np
 
@@ -34,7 +34,16 @@ class MlpTrading(object):
     # |--------------------------------------------------------|
     # |                                                        |
     # |--------------------------------------------------------|
-    def execute(self, skip_days=3600, epochs=500, size_hidden=512, batch_size=128, percent_test_split=0.33):
+    def execute(self, skip_days=3600, epochs=5000, size_hidden=512, batch_size=128, percent_test_split=0.33
+                    , loss         = 'categorical_crossentropy'
+                    , lr           = 0.00001# default=0.001   best=0.00002
+                    , rho          = 0.9    # default=0.9     0.5 same
+                    , epsilon      = None
+                    , decay        = 0.0
+                    , kernel_init  = 'glorot_uniform'
+                    , dropout      = 0.2
+                    , verbose      = 0
+    ):
         print('\n======================================')
         print('\nLoading the data')
         print('\n======================================')
@@ -79,17 +88,17 @@ class MlpTrading(object):
         print('\n======================================')
         print('\nCreating the model')
         print('\n======================================')
-        model = self._create_model(size_hidden)
+        model = self._create_model(size_hidden, dropout)
 
         print('\n======================================')
         print('\nCompiling the model')
         print('\n======================================')
-        self._compile_mode(model)
+        self._compile_mode(model, loss=loss, lr=lr, rho=rho, epsilon=epsilon, decay=decay)
 
         print('\n======================================')
-        print(f'\nTrain model for {epochs} epochs...')
+        print(f"\nTrain model for {epochs} epochs...")
         print('\n======================================')
-        history = self._train_model(model, epochs, batch_size)
+        history = self._train_model(model, epochs, batch_size, verbose)
 
         print('\n======================================')
         print('\nPrinting history')
@@ -102,7 +111,7 @@ class MlpTrading(object):
         self._evaluate(model)
 
         print('\n======================================')
-        print('\nPredict unseen data with 10 probabilities for 10 classes(choose the highest)')
+        print('\nPredict unseen data with 2 probabilities for 2 classes(choose the highest)')
         print('\n======================================')
         self._predict(model)
 
@@ -225,35 +234,37 @@ class MlpTrading(object):
     # |--------------------------------------------------------|
     # |                                                        |
     # |--------------------------------------------------------|
-    def _create_model(self, size_hidden):
+    def _create_model(self, size_hidden, dropout=0.2):
         model = Sequential()  # stack of layers
-        model.add(Dense(size_hidden, activation='relu', input_shape=(self.size_input,)))
-        model.add(Dropout(0.2))  # for generalization
-        model.add(Dense(size_hidden, activation='relu'))
-        model.add(Dropout(0.2))  # regularization technic by removing some nodes
-        model.add(Dense(self.size_output, activation='softmax'))
+        model.add(Dense  (size_hidden, activation='relu', input_shape=(self.size_input,)))
+        model.add(Dropout(dropout))  # for generalization
+        model.add(Dense  (size_hidden, activation='relu'))
+        model.add(Dropout(dropout))#for generalization.
+        model.add(Dense  (size_hidden, activation='relu'))
+        model.add(Dropout(dropout))  # regularization technic by removing some nodes
+        model.add(Dense  (self.size_output, activation='softmax'))
         model.summary()
         return model
 
     # |--------------------------------------------------------|
-    # |                                                        |
+    # |                                                  ,       |
     # |--------------------------------------------------------|
     @staticmethod
-    def _compile_mode(model):
-        model.compile(loss='categorical_crossentropy',  # measure how accurate the model during training
-                      optimizer=RMSprop(),  # this is how model is updated based on data and loss function
+    def _compile_mode(model, loss='categorical_crossentropy', lr=0.00001, rho=0.9, epsilon=None, decay=0.0):
+        model.compile(loss=loss,  # measure how accurate the model during training
+                      optimizer=RMSprop(lr=lr, rho=rho, epsilon=epsilon, decay=decay),  # this is how model is updated based on data and loss function
                       metrics=['accuracy'])
 
     # |--------------------------------------------------------|
     # |                                                        |
     # |--------------------------------------------------------|
-    def _train_model(self, model, epochs, batch_size):
+    def _train_model(self, model, epochs, batch_size, verbose=0):
         return model.fit(self.x_train,
                          self.y_train,
                          batch_size=batch_size,
                          epochs=epochs,
                          validation_data=(self.x_test, self.y_test),
-                         verbose=1)
+                         verbose=verbose)
 
     # |--------------------------------------------------------|
     # |                                                        |
