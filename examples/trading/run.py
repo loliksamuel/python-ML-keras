@@ -13,5 +13,5 @@ mlp_trading.execute(  skip_days     =3600
                     , decay        = 0.0
                     , kernel_init  = 'glorot_uniform'
                     , dropout      = 0.2
-                    , verbose      = 0
+                    , verbose      = 2
                                           )

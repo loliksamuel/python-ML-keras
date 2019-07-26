@@ -5,7 +5,7 @@ from examples.trading.utils import get_data_from_disc, plot_selected, plot_stat_
 from sklearn.model_selection import train_test_split
 from keras.utils import to_categorical
 from keras.models import Sequential
-from keras.layers import Dense, Dropout
+from keras.layers import Dense, Dropout, LSTM, Embedding
 from keras.optimizers import RMSprop
 from ww import f
 import pandas as pd
@@ -30,11 +30,17 @@ class MlpTrading(object):
         self.x_test = None
         self.y_train = None
         self.y_test = None
+        self.seed = 7
+        np.random.seed(self.seed)
 
     # |--------------------------------------------------------|
     # |                                                        |
     # |--------------------------------------------------------|
-    def execute(self, skip_days=3600, epochs=5000, size_hidden=512, batch_size=128, percent_test_split=0.33
+    def execute(self, skip_days    = 3600
+                    , epochs       = 5000
+                    , size_hidden  = 15
+                    , batch_size   = 128
+                    , percent_test_split=0.33
                     , loss         = 'categorical_crossentropy'
                     , lr           = 0.00001# default=0.001   best=0.00002
                     , rho          = 0.9    # default=0.9     0.5 same
@@ -88,7 +94,8 @@ class MlpTrading(object):
         print('\n======================================')
         print('\nCreating the model')
         print('\n======================================')
-        model = self._create_model(size_hidden, dropout)
+        model = self._create_model_mlp (size_hidden, dropout, kernel_init)
+        #model = self._create_model_lstm(size_hidden, dropout, kernel_init)
 
         print('\n======================================')
         print('\nCompiling the model')
@@ -234,15 +241,27 @@ class MlpTrading(object):
     # |--------------------------------------------------------|
     # |                                                        |
     # |--------------------------------------------------------|
-    def _create_model(self, size_hidden, dropout=0.2):
+    def _create_model_mlp(self, size_hidden, dropout=0.2, kernel_init='glorot_uniform'):
         model = Sequential()  # stack of layers
-        model.add(Dense  (size_hidden, activation='relu', input_shape=(self.size_input,)))
+        model.add(Dense  (units=size_hidden, activation='relu', input_shape=(self.size_input,), kernel_initializer=kernel_init))
         model.add(Dropout(dropout))  # for generalization
-        model.add(Dense  (size_hidden, activation='relu'))
+        model.add(Dense  (units=size_hidden, activation='relu'))
         model.add(Dropout(dropout))#for generalization.
-        model.add(Dense  (size_hidden, activation='relu'))
+        model.add(Dense  (units=size_hidden, activation='relu'))
         model.add(Dropout(dropout))  # regularization technic by removing some nodes
-        model.add(Dense  (self.size_output, activation='softmax'))
+        model.add(Dense  (units=self.size_output, activation='softmax'))
+        model.summary()
+        return model
+
+    def _create_model_lstm(self, size_hidden, dropout=0.2, kernel_init='glorot_uniform'):
+
+        model = Sequential()
+        model.add(Embedding(input_dim = (self.size_input), output_dim = size_hidden, input_length = self.size_input))#input_dim=input_shape
+        model.add(LSTM(output_dim=size_hidden, activation='sigmoid', inner_activation='hard_sigmoid', return_sequences=True))
+        model.add(Dropout(dropout))
+        model.add(LSTM(output_dim=size_hidden, activation='sigmoid', inner_activation='hard_sigmoid'))
+        model.add(Dropout(dropout))
+        model.add(Dense(self.size_output, activation='sigmoid'))
         model.summary()
         return model
 
@@ -251,9 +270,9 @@ class MlpTrading(object):
     # |--------------------------------------------------------|
     @staticmethod
     def _compile_mode(model, loss='categorical_crossentropy', lr=0.00001, rho=0.9, epsilon=None, decay=0.0):
-        model.compile(loss=loss,  # measure how accurate the model during training
-                      optimizer=RMSprop(lr=lr, rho=rho, epsilon=epsilon, decay=decay),  # this is how model is updated based on data and loss function
-                      metrics=['accuracy'])
+        model.compile( loss=loss  # measure how accurate the model during training
+                      ,optimizer=RMSprop(lr=lr, rho=rho, epsilon=epsilon, decay=decay)  # this is how model is updated based on data and loss function
+                      ,metrics=['accuracy'])
 
     # |--------------------------------------------------------|
     # |                                                        |
@@ -264,6 +283,7 @@ class MlpTrading(object):
                          batch_size=batch_size,
                          epochs=epochs,
                          validation_data=(self.x_test, self.y_test),
+                         validation_split = 0.1,
                          verbose=verbose)
 
     # |--------------------------------------------------------|
